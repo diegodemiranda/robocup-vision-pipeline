@@ -6,9 +6,7 @@
 ---
 
 <a id="-português"></a>
-# 🇧🇷 Português
-
-# Pipeline de Visão Computacional, Controle de Robô e Estimação de Distância com Webots + ROS 2 + YOLOv8
+# 🇧🇷 Pipeline de Visão Computacional, Controle de Robô e Estimação de Distância com Webots + ROS 2 + YOLOv8
 
 Este projeto demonstra um pipeline integrado de visão computacional e controle de robôs utilizando a simulação **Webots** e o framework **ROS 2**. Ele permite que um robô virtual (**AUREA**) se movimente, detecte objetos usando **YOLOv8** e estime distâncias no mundo real usando **Mapeamento de Perspectiva Inversa (IPM - Inverse Perspective Mapping)**.
 
@@ -164,9 +162,7 @@ Correção incluída em `soccer_ipm/utils.py`: `object_at_bottom_of_image` agora
 ---
 
 <a id="-english"></a>
-# 🇺🇸 English
-
-# Computer Vision, Robot Control & Distance Estimation Pipeline with Webots + ROS 2 + YOLOv8
+# 🇺🇸 Computer Vision, Robot Control & Distance Estimation Pipeline with Webots + ROS 2 + YOLOv8
 
 This project demonstrates an integrated computer vision and robot control pipeline using the **Webots** simulation and the **ROS 2** framework. It allows a virtual robot (**AUREA**) to move, detect objects using **YOLOv8**, and estimate real-world distances using **Inverse Perspective Mapping (IPM)**.
 
