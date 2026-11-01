@@ -6,7 +6,7 @@
 ---
 
 <a id="-português"></a>
-# **🇧🇷 Visão para RoboCup Humanoid: detecção por YOLO validada por segmentação de campo em HSV, em ROS 2.**
+# **🇧🇷 Visão para RoboCup Humanoid: detecção por YOLO validada por segmentação de campo em HSV e ROS 2.**
 
 > A documentação detalhada em [`docs/`](docs/). / *The detailed documentation under `docs/`.*
 
@@ -409,7 +409,7 @@ segmentação se baseia em:
 ---
 
 <a id="-english"></a>
-# **🇺🇸 Vision for RoboCup Humanoid: YOLO detection validated by HSV field segmentation, on ROS 2.**
+# **🇺🇸 Vision for RoboCup Humanoid: YOLO detection validated by HSV field segmentation and ROS 2.**
 
 > *The detailed documentation under [`docs/`](docs/) is in Portuguese.*
 
