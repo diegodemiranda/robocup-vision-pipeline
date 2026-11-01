@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>Webots_YOLOv8</name>
+  <version>0.1.0</version>
+  <description>Visão para RoboCup: detector YOLO (YOLOv8n/YOLO26n) validado por segmentação de campo em HSV, publicando mensagens soccer_vision_2d_msgs para o soccer_ipm.</description>
+  <maintainer email="diegodemiranda@users.noreply.github.com">Diego de Miranda</maintainer>
+  <license>MIT</license>
+
+  <depend>rclpy</depend>
+  <depend>ament_index_python</depend>
+  <depend>cv_bridge</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>vision_msgs</depend>
+  <depend>rcl_interfaces</depend>
+  <depend>soccer_vision_2d_msgs</depend>
+
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>soccer_ipm</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-pandas</exec_depend>
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
