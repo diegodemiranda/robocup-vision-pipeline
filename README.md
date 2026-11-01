@@ -8,7 +8,7 @@
 <a id="-português"></a>
 # **🇧🇷 Visão para RoboCup Humanoid: detecção por YOLO validada por segmentação de campo em HSV, em ROS 2.**
 
-> A documentação detalhada em [`docs/`](docs/) está em português. / *The detailed documentation under `docs/` is in Portuguese.*
+> A documentação detalhada em [`docs/`](docs/). / *The detailed documentation under `docs/`.*
 
 ## Sumário
 
