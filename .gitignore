@@ -218,3 +218,26 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---------------------------------------------------------------------------
+# robocup-vision-pipeline
+# ---------------------------------------------------------------------------
+
+# ROS 2 / colcon
+build/
+install/
+log/
+
+# Pesos e modelos exportados: NÃO versionar (veja README, "Pesos do detector").
+# A pasta modelo/ existe só para o `colcon build` instalar os pesos que você colocar nela.
+modelo/*
+!modelo/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Saídas de treino e de benchmark
+runs/
+comparison/
+resultados/
