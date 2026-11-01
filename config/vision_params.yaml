@@ -1,0 +1,42 @@
+# Parâmetros do vision_node (YOLOv8 + segmentação + validação).
+# Todos podem ser alterados em runtime, por exemplo:
+#   ros2 param set /vision_node validation.footpoint_margin_px 20
+#   ros2 param set /vision_node hsv.field_min "[48, 100, 70]"
+# Uma mudança inválida é recusada inteira (o nó continua com os valores antigos).
+vision_node:
+  ros__parameters:
+    # show_window é argumento do launch: show_window:=false para rodar sem display.
+    # Pesos do detector (só na partida). Os pesos NÃO acompanham o repositório (veja o README).
+    # Aceita um nome de arquivo em modelo/ (padrão: best.pt) ou um CAMINHO ABSOLUTO.
+    # Prefira o argumento do launch:  model_file:=/caminho/para/yolo26n_best.pt
+    # model_file: best.pt
+    # true = recusa na partida um modelo cujas classes não sejam as esperadas (ver detections.py).
+    # Só na partida. Evita ler IDs com o significado trocado (ex.: modelo do robô real).
+    strict_class_check: true
+
+    publish_segmentation: true     # publica field_boundary_in_image e obstacles_in_image
+
+    validation:
+      enabled: true                # false = publica tudo que o YOLO detectou (sem validar)
+      footpoint_margin_px: 12      # tolerância (px) do ponto de apoio em relação ao campo
+      min_marking_ratio: 0.04      # fração mínima de marcação (branco) na caixa de uma interseção
+
+    pipeline:
+      process_width: 540           # largura de processamento (câmera = 1080); 0 = sem redução
+      column_step: 4               # 1 coluna a cada N na varredura da fronteira
+      min_obstacle_area: 150       # px² na resolução de processamento
+      head_tilted_up: false        # true = varredura de baixo para cima
+
+    # Faixas HSV (OpenCV: H 0-179, S/V 0-255), SEMPRE inteiros.
+    # Padrão: campo derivado de recursos/green_pixels.csv (+ margem); branco S/V de
+    # def_white_threshold.py com hue livre. Descomente para fixar valores.
+    # O vermelho usa hue circular (min > max).
+    # hsv:
+    #   field_min: [47, 115, 79]
+    #   field_max: [66, 213, 209]
+    #   white_min: [0, 0, 213]
+    #   white_max: [179, 43, 255]
+    #   red_min: [170, 100, 80]
+    #   red_max: [10, 255, 255]
+    #   blue_min: [100, 100, 80]
+    #   blue_max: [130, 255, 255]
