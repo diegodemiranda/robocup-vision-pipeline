@@ -1,0 +1,16 @@
+diff --git a/soccer_ipm/soccer_ipm/utils.py b/soccer_ipm/soccer_ipm/utils.py
+index 5a65adc..abe52c7 100644
+--- a/soccer_ipm/soccer_ipm/utils.py
++++ b/soccer_ipm/soccer_ipm/utils.py
+@@ -44,6 +44,11 @@ def object_at_bottom_of_image(
+     :param thresh: Threshold defining the region at the bottom of the image which is
+         counted as 'the bottom' as a fraction of the image height
+     """
++    if camera_info is None:
++        # Ainda não chegou CameraInfo: deixa o decorator catch_camera_info_not_set_error
++        # avisar e descartar a mensagem, em vez de derrubar o nó com AttributeError.
++        raise CameraInfoNotSetException
++
+     image_height = camera_info.height
+     image_height /= max(camera_info.binning_y, 1)
+ 
