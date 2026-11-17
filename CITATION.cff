@@ -1,0 +1,70 @@
+cff-version: 1.2.0
+message: "Se você usar este software, cite-o com os metadados abaixo. / If you use this software, please cite it using the metadata below."
+title: "robocup-vision-pipeline: YOLO detection validated by HSV field segmentation for RoboCup Humanoid Soccer (ROS 2)"
+type: software
+version: 0.1.0
+authors:
+  - family-names: "de Miranda"
+    given-names: "Diego"
+  # Outros colaboradores só devem ser listados com o consentimento deles. Em especial, parte do
+  # código e dos dados vem do projeto de simulação original (veja "Licença e proveniência" no README).
+repository-code: "https://github.com/diegodemiranda/robocup-vision-pipeline"
+url: "https://github.com/diegodemiranda/robocup-vision-pipeline"
+# Reflete o arquivo LICENSE atual. A revisão de licenciamento descrita no README ainda está pendente:
+# se a licença mudar, atualize também LICENSE, package.xml e setup.py.
+license: MIT
+abstract: >-
+  Vision system for RoboCup humanoid soccer. A YOLO detector (YOLOv8n or YOLO26n) runs alongside a
+  classical HSV field segmentation (field boundary, obstacles and line points); a detection is published
+  only if it lies inside the segmented field. The segmentation package works on its own, without ROS or a
+  detector. Includes a ROS 2 integration, a speed benchmark of YOLOv8n versus YOLO26n and a training and
+  evaluation toolkit.
+keywords:
+  - RoboCup
+  - humanoid soccer
+  - computer vision
+  - object detection
+  - YOLO
+  - ROS 2
+  - HSV segmentation
+references:
+  - type: conference-paper
+    title: "An Open Source Vision Pipeline Approach for RoboCup Humanoid Soccer"
+    authors:
+      - family-names: Fiedler
+        given-names: Niklas
+      - family-names: Brandt
+        given-names: Hendrik
+      - family-names: Gutsche
+        given-names: Jan
+      - family-names: Vahl
+        given-names: Florian
+      - family-names: Hagge
+        given-names: Jonas
+      - family-names: Bestmann
+        given-names: Marc
+    year: 2019
+    collection-title: "RoboCup 2019: Robot World Cup XXIII"
+    doi: "10.1007/978-3-030-35699-6_29"
+    notes: "Base of the segmentation algorithm in src/pipeline/."
+  - type: conference-paper
+    title: "TORSO-21 Dataset: Typical Objects in RoboCup Soccer 2021"
+    authors:
+      - family-names: Bestmann
+        given-names: Marc
+      - family-names: Engelke
+        given-names: Timon
+      - family-names: Fiedler
+        given-names: Niklas
+      - family-names: Güldenstein
+        given-names: Jasper
+      - family-names: Gutsche
+        given-names: Jan
+      - family-names: Hagge
+        given-names: Jonas
+      - family-names: Vahl
+        given-names: Florian
+    year: 2021
+    doi: "10.1007/978-3-030-98682-7_6"
+    url: "https://github.com/bit-bots/TORSO_21_dataset"
+    notes: "Dataset on which the reference detector weights were trained."

@@ -1,0 +1,13 @@
+# Dependências para usar a SEGMENTAÇÃO (pacote `pipeline`) e rodar os testes, sem ROS.
+# Os mínimos são as versões do Ubuntu 22.04 / ROS 2 Humble (apt): numpy 1.21, pandas 1.3,
+# OpenCV 4.5 e pytest 6.2, verificadas em Python 3.10. Funciona também nas versões atuais.
+numpy>=1.21
+opencv-python>=4.5
+pandas>=1.3
+pytest>=6.2
+
+# --- Opcional: detector YOLO, ferramentas de avaliação e testes de contrato (instala o PyTorch) ---
+#   pip install ultralytics          # verificado com 8.4.184
+#   pip install onnx onnxruntime     # benchmarks em ONNX Runtime
+
+# --- Integração ROS 2 (nó, launch, mensagens): NÃO vem do pip. Veja "Instalação" no README. ---
