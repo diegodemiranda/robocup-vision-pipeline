@@ -16,7 +16,7 @@ from pipeline import (  # noqa: E402
 )
 from Webots_YOLOv8.vision_parameters import default_hsv_ranges  # noqa: E402
 
-GREEN_CSV = os.path.join(ROOT, 'recursos', 'green_pixels.csv')
+GREEN_CSV = os.path.join(ROOT, 'src', 'Webots_YOLOv8', 'data', 'green_pixels.csv')
 
 
 @pytest.fixture(scope='session')

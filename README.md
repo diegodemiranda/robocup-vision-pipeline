@@ -29,7 +29,7 @@ O projeto separa deliberadamente três coisas:
 
 1. **O algoritmo** (`src/pipeline/`): segmentação HSV utilizável sem ROS e sem detector.
 2. **A integração ROS 2** (`src/Webots_YOLOv8/`): YOLO, validação, parâmetros e mensagens.
-3. **Os pesos** (`modelo/`): ficam **fora** do código-fonte (veja [Pesos do detector](#pesos-do-detector)).
+3. **Os pesos** (`src/Webots_YOLOv8/models/`): ficam fora do controle de versão (veja [Pesos do detector](#pesos-do-detector)).
 
 Os procedimentos de benchmark e de treino também fazem parte do repositório, para que terceiros reproduzam as
 medições e avaliem outras arquiteturas. Detalhes em [`docs/architecture.md`](docs/architecture.md).
@@ -100,11 +100,6 @@ robocup-vision-pipeline/
 ├── README.md  LICENSE  CITATION.cff  .gitignore  requirements.txt
 ├── robot.sh                                           # launcher do robô real: setup | build | run
 ├── package.xml  setup.py  setup.cfg  resource/        # pacote ROS 2 (ament_python): Webots_YOLOv8
-├── config/vision_params.yaml                          # parâmetros do nó
-├── launch/vision.launch.py                            # simulador: nó de visão + soccer_ipm
-├── launch/vision_robot.launch.py                      # robô real: câmera USB + visão + soccer_ipm
-├── modelo/                                            # ONDE colocar os pesos (vazia; veja "Pesos")
-├── recursos/                                          # calibração do verde do campo (+ README)
 ├── src/
 │   ├── pipeline/                                      # ALGORITMO: segmentação HSV, sem ROS
 │   │   ├── color_common.py  field_boundary_detector.py  obstacle_detector.py
@@ -113,7 +108,11 @@ robocup-vision-pipeline/
 │       ├── detections.py  detection_validator.py  vision_parameters.py
 │       ├── vision_debug.py  vision_messages.py  running_inference.py  yolo_simulation.py
 │       ├── usb_camera.py                              # nó da câmera USB (/dev/video<id>)
-│       └── tools/  compare_models.py  train_yolo26n.py          # benchmark e treino
+│       ├── tools/  compare_models.py  train_yolo26n.py          # benchmark e treino
+│       ├── config/  vision_params.yaml                 # parâmetros do nó
+│       ├── launch/  vision.launch.py  vision_robot.launch.py
+│       ├── data/  green_pixels.csv  README.md           # calibração HSV
+│       └── models/                                     # pesos locais, não versionados
 ├── test/                                              # 58 testes (veja "Testes")
 └── docs/  architecture.md  benchmarks.md  development.md  img/  patches/
 ```
@@ -254,13 +253,15 @@ ros2 topic echo /balls_relative                                                 
 
 ### Executando no robô real
 
-Os arquivos `robot.sh`, `launch/vision_robot.launch.py` e `src/Webots_YOLOv8/usb_camera.py` existem para rodar o
-pipeline **sem simulador**, com câmera USB (`/dev/video<id>`) e um único comando. **Não foram testados em robô real** (apenas conferência de sintaxe); trate o primeiro uso como um teste de bancada.
+Os arquivos `robot.sh`, `src/Webots_YOLOv8/launch/vision_robot.launch.py` e
+`src/Webots_YOLOv8/usb_camera.py` existem para rodar o pipeline **sem simulador**, com câmera USB
+(`/dev/video<id>`) e um único comando. **Não foram testados em robô real** (apenas conferência de sintaxe);
+trate o primeiro uso como um teste de bancada.
 
 | Arquivo | Função |
 |---|---|
 | `robot.sh` | Launcher de terminal: `setup` (uma vez), `build` e `run` |
-| `launch/vision_robot.launch.py` | Sobe câmera USB + nó de visão + `soccer_ipm` (+ TF estático opcional), com relógio real |
+| `src/Webots_YOLOv8/launch/vision_robot.launch.py` | Sobe câmera USB + nó de visão + `soccer_ipm` (+ TF estático opcional), com relógio real |
 | `src/Webots_YOLOv8/usb_camera.py` | Nó `usb_camera` (`ros2 run Webots_YOLOv8 usb_camera`): lê `/dev/video<id>` com OpenCV e publica `Image` e `CameraInfo` |
 
 **Diferenças para o `vision.launch.py` (simulador)**\
@@ -286,8 +287,8 @@ vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `
    sudo usermod -aG video $USER
    sudo apt install git python3-pip python3-colcon-common-extensions python3-rosdep ros-humble-tf2-ros
    ```
-3. **Coloque os pesos** em `modelo/best.pt` (ou use `MODEL=/caminho/best.pt` no passo 6). O modelo precisa seguir o
-   esquema de 7 classes do nó.
+3. **Coloque os pesos** em `src/Webots_YOLOv8/models/best.pt` (ou use `MODEL=/caminho/best.pt` no passo 6).
+   O modelo precisa seguir o esquema de 7 classes do nó.
 4. **Descubra a câmera**: `ls /dev/video*` (uma câmera USB costuma criar dois nós; normalmente o de índice par é o
    de vídeo, ex.: `/dev/video0`; confira com `v4l2-ctl --list-devices`, do pacote `v4l-utils`).
 5. **Setup, uma vez** (`./robot.sh setup`): clona `soccer_interfaces`, `ipm` e `soccer_ipm` em `~/robot_ws`, aplica
@@ -322,10 +323,12 @@ vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `
    distorção). Sem calibrar (xadrez + `camera_calibration`), as distâncias em metros ficam erradas. Passe `fx`,
    `fy`, `cx`, `cy` ao nó (`--ros-args -p fx:=...`) quando tiver os valores.
 
-3. **Calibração de cor (HSV).** O verde padrão vem de `recursos/green_pixels.csv`, amostrado no **campo simulado do
-   Webots**; ele **não serve para um campo real** ou outra iluminação. Sem ajustar, a validação tende a rejeitar
-   detecções corretas (`outside_field`). Defina as faixas no `config/vision_params.yaml` (bloco `hsv:`) ou em
-   execução com `ros2 param set /vision_node hsv.field_min "[...]"`; veja [`recursos/README.md`](recursos/README.md).
+   3. **Calibração de cor (HSV).** O verde padrão vem de
+      `src/Webots_YOLOv8/data/green_pixels.csv`, amostrado no **campo simulado do Webots**; ele **não serve para
+      um campo real** ou outra iluminação. Sem ajustar, a validação tende a rejeitar detecções corretas
+      (`outside_field`). Defina as faixas no `src/Webots_YOLOv8/config/vision_params.yaml` (bloco `hsv:`) ou em
+      execução com `ros2 param set /vision_node hsv.field_min "[...]"`; veja
+      [`src/Webots_YOLOv8/data/README.md`](src/Webots_YOLOv8/data/README.md).
 4. **Se não houver internet no robô**, rode o `setup` antes, em outra rede, no próprio robô.
 5. **Hardware.** O PyTorch roda em CPU. O desempenho medido (≈20 ms/frame) foi em 1 vCPU de x86; em ARM ou em
    computador embarcado fraco, meça (`ros2 topic hz /balls_in_image`) e, se preciso, reduza `width`/`height`/`fps`.
@@ -338,7 +341,8 @@ TF e `camera_info` (itens 1 e 2). O nó recusa a partida listando classes: o mod
 
 ## Pesos do detector
 
-Apenas os **pesos do YOLOv8n** estão no repositírio (diretório `modelo/`). O nó precisa deles para iniciar
+A pasta de pesos locais é `src/Webots_YOLOv8/models/`; arquivos de modelo não são versionados.
+O nó precisa dos pesos YOLO para iniciar.
 
 
 | Arquivo | Arquitetura | Classes | Treino | Tamanho | SHA-256 |
@@ -353,14 +357,14 @@ mAP50 0,968, mAP50-95 0,685.
 Você pode (a) obter o arquivo com quem o treinou, ou (b) **treinar o seu** com a receita reprodutível (`python -m Webots_YOLOv8.tools.train_yolo26n`; veja [Avaliação](#avaliação-e-reprodutibilidade)).
 
 **Como configurar `model_file`:**\
-O parâmetro aceita um **caminho absoluto** ou um nome de arquivo em `modelo/`:
+O parâmetro aceita um **caminho absoluto** ou um nome de arquivo instalado em `share/Webots_YOLOv8/modelo/`:
 
 ```bash
 # 1) caminho absoluto (o mais simples; funciona com qualquer modo de build)
 ros2 launch Webots_YOLOv8 vision.launch.py model_file:=/home/voce/pesos/best.pt
 
-# 2) nome em modelo/: coloque o arquivo ANTES do colcon build, que o instala em share/Webots_YOLOv8/modelo/
-cp /home/voce/pesos/best.pt ~/ws/src/robocup-vision-pipeline/modelo/ && colcon build --packages-select Webots_YOLOv8
+# 2) nome instalado: coloque o arquivo na pasta de modelos da fonte ANTES do colcon build
+cp /home/voce/pesos/best.pt ~/ws/src/robocup-vision-pipeline/src/Webots_YOLOv8/models/ && colcon build --packages-select Webots_YOLOv8
 ros2 launch Webots_YOLOv8 vision.launch.py model_file:=best.pt
 ```
 
@@ -453,8 +457,8 @@ segmentação se baseia em:
 - **Benchmarks em 1 vCPU e imagens sintéticas**; nada medido no robô.
 - **Tópico da câmera fixo** (`/AUREA/camera_optical_frame/image_color`). Para outra câmera:
   `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/minha/camera`.
-  O `launch/vision.launch.py` também aponta os remaps do `soccer_ipm` para os tópicos do AUREA; edite-os.
-  Para o robô real use `launch/vision_robot.launch.py` (veja [Executando no robô real](#executando-no-robô-real-câmera-usb)).
+  O `src/Webots_YOLOv8/launch/vision.launch.py` também aponta os remaps do `soccer_ipm` para os tópicos do AUREA; edite-os.
+  Para o robô real use `src/Webots_YOLOv8/launch/vision_robot.launch.py` (veja [Executando no robô real](#executando-no-robô-real-câmera-usb)).
 - **Formato de saída único** (`soccer_vision_2d_msgs`); outro formato exige um adaptador, não incluído.
 - **Faixas HSV de exemplo** em `python -m pipeline` sem `--hsv-csv`; calibre para a sua câmera.
 - **Ambiente-alvo (Ubuntu 22.04 + Humble + Webots) não testado de ponta a ponta.**
@@ -487,7 +491,7 @@ The project deliberately separates three things:
 
 1. **The algorithm** (`src/pipeline/`): HSV segmentation usable without ROS and without a detector.
 2. **The ROS 2 integration** (`src/Webots_YOLOv8/`): YOLO, validation, parameters and messages.
-3. **The weights** (`modelo/`): kept **outside** the source code (see [Detector weights](#detector-weights)).
+3. **The weights** (`src/Webots_YOLOv8/models/`): kept out of version control (see [Detector weights](#detector-weights)).
 
 The benchmark and training procedures are part of the repository too, so third parties can reproduce the measurements and
 evaluate other architectures. Details in [`docs/architecture.md`](docs/architecture.md) (Portuguese).
@@ -557,11 +561,6 @@ robocup-vision-pipeline/
 ├── README.md  LICENSE  CITATION.cff  .gitignore  requirements.txt
 ├── robot.sh                                           # real-robot launcher: setup | build | run
 ├── package.xml  setup.py  setup.cfg  resource/        # ROS 2 package (ament_python): Webots_YOLOv8
-├── config/vision_params.yaml                          # node parameters
-├── launch/vision.launch.py                            # simulator: vision node + soccer_ipm
-├── launch/vision_robot.launch.py                      # real robot: USB camera + vision + soccer_ipm
-├── modelo/                                            # WHERE YOLOv8n weights are stored (see "Detector weights")
-├── recursos/                                          # field-green calibration (+ README)
 ├── src/
 │   ├── pipeline/                                      # ALGORITHM: HSV segmentation, no ROS
 │   │   ├── color_common.py  field_boundary_detector.py  obstacle_detector.py
@@ -570,7 +569,11 @@ robocup-vision-pipeline/
 │       ├── detections.py  detection_validator.py  vision_parameters.py
 │       ├── vision_debug.py  vision_messages.py  running_inference.py  yolo_simulation.py
 │       ├── usb_camera.py                              # USB camera node (/dev/video<id>)
-│       └── tools/  compare_models.py  train_yolo26n.py          # benchmark and training
+│       ├── tools/  compare_models.py  train_yolo26n.py          # benchmark and training
+│       ├── config/  vision_params.yaml                 # node parameters
+│       ├── launch/  vision.launch.py  vision_robot.launch.py
+│       ├── data/  green_pixels.csv  README.md           # HSV calibration
+│       └── models/                                     # local weights, not versioned
 ├── test/                                              # 58 tests (see "Running the tests")
 └── docs/  architecture.md  benchmarks.md  development.md  img/  patches/
 ```
@@ -709,14 +712,14 @@ ros2 topic echo /balls_relative                                                 
 
 ### Running on the real robot
 
-`robot.sh`, `launch/vision_robot.launch.py` and `src/Webots_YOLOv8/usb_camera.py` run the pipeline **without the
+`robot.sh`, `src/Webots_YOLOv8/launch/vision_robot.launch.py` and `src/Webots_YOLOv8/usb_camera.py` run the pipeline **without the
 simulator**, with a USB camera (`/dev/video<id>`) and a single command. **They have not been tested on a real robot**
 (syntax check only); treat the first run as a bench test.
 
 | File | Purpose |
 |---|---|
 | `robot.sh` | Terminal launcher: `setup` (once), `build` and `run` |
-| `launch/vision_robot.launch.py` | Starts USB camera + vision node + `soccer_ipm` (+ optional static TF), on the real clock |
+| `src/Webots_YOLOv8/launch/vision_robot.launch.py` | Starts USB camera + vision node + `soccer_ipm` (+ optional static TF), on the real clock |
 | `src/Webots_YOLOv8/usb_camera.py` | `usb_camera` node (`ros2 run Webots_YOLOv8 usb_camera`): reads `/dev/video<id>` with OpenCV, publishes `Image` and `CameraInfo` |
 
 **Differences from `vision.launch.py` (simulator)**\
@@ -741,8 +744,8 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
    sudo usermod -aG video $USER
    sudo apt install git python3-pip python3-colcon-common-extensions python3-rosdep ros-humble-tf2-ros
    ```
-3. **Put the weights** at `modelo/best.pt` (or use `MODEL=/path/best.pt` in step 6). The model must follow the node's
-   7-class scheme.
+3. **Put the weights** at `src/Webots_YOLOv8/models/best.pt` (or use `MODEL=/path/best.pt` in step 6).
+   The model must follow the node's 7-class scheme.
 4. **Find the camera**: `ls /dev/video*` (a USB camera often creates two nodes; usually the even index is the
    video one, e.g. `/dev/video0`; check with `v4l2-ctl --list-devices` from `v4l-utils`).
 5. **Setup, once** (`./robot.sh setup`): clones `soccer_interfaces`, `ipm` and `soccer_ipm` into `~/robot_ws`,
@@ -777,10 +780,12 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
    Without calibration (checkerboard + `camera_calibration`), distances in metres will be wrong. Pass `fx`, `fy`,
    `cx`, `cy` to the node (`--ros-args -p fx:=...`) once you have them.
 
-3. **Colour (HSV) calibration.** The default green comes from `recursos/green_pixels.csv`, sampled from the
-   **simulated Webots field**; it **does not suit a real field** or other lighting. Unadjusted, validation tends to
-   reject correct detections (`outside_field`). Set the ranges in `config/vision_params.yaml` (`hsv:` block) or at
-   run time with `ros2 param set /vision_node hsv.field_min "[...]"`; see [`recursos/README.md`](recursos/README.md).
+3. **Colour (HSV) calibration.** The default green comes from
+   `src/Webots_YOLOv8/data/green_pixels.csv`, sampled from the **simulated Webots field**; it **does not suit a
+   real field** or other lighting. Unadjusted, validation tends to reject correct detections (`outside_field`).
+   Set the ranges in `src/Webots_YOLOv8/config/vision_params.yaml` (`hsv:` block) or at run time with
+   `ros2 param set /vision_node hsv.field_min "[...]"`; see
+   [`src/Webots_YOLOv8/data/README.md`](src/Webots_YOLOv8/data/README.md).
 4. **No internet on the robot?** Run `setup` beforehand, on another network, on the robot itself.
 5. **Hardware.** PyTorch runs on CPU. The measured performance (≈20 ms/frame) was on one x86 vCPU; on ARM or a weak
    embedded computer, measure (`ros2 topic hz /balls_in_image`) and, if needed, lower `width`/`height`/`fps`.
@@ -794,7 +799,8 @@ classes: the model does not follow the 7-class scheme.
 
 ## Detector weights
 
-Only the **YOLOv8n weights** are in this repository (the `modelo/` directory). The node needs them to start.
+The local model directory is `src/Webots_YOLOv8/models/`; model files are not versioned.
+The node needs YOLO weights to start.
 
 | File | Architecture | Classes | Training | Size | SHA-256 |
 |---|---|---|---|---|---|
@@ -809,14 +815,14 @@ You can (a) obtain the file from whoever trained it, or (b) **train your own** w
 (`python -m Webots_YOLOv8.tools.train_yolo26n`; see [Evaluation](#evaluation-and-reproducibility)).
 
 **How to set `model_file`:**\
-The parameter accepts an **absolute path** or a file name inside `modelo/`:
+The parameter accepts an **absolute path** or a file name installed in `share/Webots_YOLOv8/modelo/`:
 
 ```bash
 # 1) absolute path (simplest; works with any build mode)
 ros2 launch Webots_YOLOv8 vision.launch.py model_file:=/home/you/weights/best.pt
 
-# 2) name in modelo/: put the file there BEFORE colcon build, which installs it into share/Webots_YOLOv8/modelo/
-cp /home/you/weights/best.pt ~/ws/src/robocup-vision-pipeline/modelo/ && colcon build --packages-select Webots_YOLOv8
+# 2) installed name: put the file in the source models directory BEFORE colcon build
+cp /home/you/weights/best.pt ~/ws/src/robocup-vision-pipeline/src/Webots_YOLOv8/models/ && colcon build --packages-select Webots_YOLOv8
 ros2 launch Webots_YOLOv8 vision.launch.py model_file:=best.pt
 ```
 
@@ -906,8 +912,8 @@ Use the metadata in [`CITATION.cff`](CITATION.cff) (GitHub shows a **Cite this r
 - **Benchmarks on 1 vCPU and synthetic images**; nothing measured on the robot.
 - **Fixed camera topic** (`/AUREA/camera_optical_frame/image_color`). For another camera:
   `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/my/camera`.
-  `launch/vision.launch.py` also points `soccer_ipm`'s remaps at the AUREA topics; edit them.
-  For the real robot use `launch/vision_robot.launch.py` (see [Running on the real robot](#running-on-the-real-robot)).
+  `src/Webots_YOLOv8/launch/vision.launch.py` also points `soccer_ipm`'s remaps at the AUREA topics; edit them.
+  For the real robot use `src/Webots_YOLOv8/launch/vision_robot.launch.py` (see [Running on the real robot](#running-on-the-real-robot)).
 - **Single output format** (`soccer_vision_2d_msgs`); another format requires an adapter, not included.
 - **Example HSV ranges** in `python -m pipeline` without `--hsv-csv`; calibrate for your camera.
 - **Target environment (Ubuntu 22.04 + Humble + Webots) not tested end to end.**

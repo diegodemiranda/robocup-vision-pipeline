@@ -1,4 +1,4 @@
-# recursos/
+# Dados de calibração
 
 Dados de calibração usados em tempo de execução. Hoje há um arquivo:
 
@@ -17,13 +17,13 @@ H 0–179, S e V 0–255). 382 linhas, colunas `H,S,V,class` (a coluna `class` �
 essas amostras na faixa HSV do campo: percentis 1 e 99 de cada canal, alargados por uma margem de
 (8, 40, 50) em (H, S, V), o que dá `field_min = [47, 115, 79]` e `field_max = [66, 213, 209]`. A faixa
 pode ser sobrescrita em tempo de execução (`ros2 param set /vision_node hsv.field_min "[...]"`) ou fixada
-em `config/vision_params.yaml`, sem precisar deste arquivo.
+em `src/Webots_YOLOv8/config/vision_params.yaml`, sem precisar deste arquivo.
 
 **Para a sua câmera/campo.** Este CSV descreve o verde **simulado**; num campo real ou noutra iluminação ele
 não serve. Gere o seu: amostre pixels do campo (BGR → HSV com `cv2.cvtColor`) e grave um CSV com o
 cabeçalho `H,S,V` (a coluna `class` é opcional). Ou ignore o arquivo e defina as faixas pelo YAML.
 
-**Proveniência.** Estes dados vêm do projeto de simulação original (veja [Licença e proveniência](../README.md#licença-e-proveniência)
+**Proveniência.** Estes dados vêm do projeto de simulação original (veja [Licença e proveniência](../../../README.md#licença-e-proveniência)
 no README); confirme com o autor antes de redistribuir fora do projeto.
 
 ## Limiares do branco

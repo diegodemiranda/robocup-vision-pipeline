@@ -51,7 +51,7 @@ from Webots_YOLOv8.detections import EXPECTED_CLASS_NAMES
 
 # <raiz>/src/Webots_YOLOv8/tools/compare_models.py -> <raiz>
 REPO_ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_GREEN_CSV = REPO_ROOT / 'recursos' / 'green_pixels.csv'
+DEFAULT_GREEN_CSV = REPO_ROOT / 'src' / 'Webots_YOLOv8' / 'data' / 'green_pixels.csv'
 
 CAMERA_SIZE = (1080, 720)  # (largura, altura) da câmera do AUREA
 
@@ -185,7 +185,7 @@ def export_onnx(model: YOLO, imgsz: int, out_dir: Path) -> YOLO:
     """Exporta para ONNX (CPU) e reabre pelo Ultralytics para medir igual ao .pt.
 
     O Ultralytics grava o .onnx ao lado dos pesos; ele é movido para `out_dir` para não
-    poluir a pasta `modelo/` do pacote.
+    poluir a pasta de modelos do pacote.
     """
     exported = Path(model.export(format='onnx', imgsz=imgsz, simplify=False, verbose=False))
     target = out_dir / exported.name

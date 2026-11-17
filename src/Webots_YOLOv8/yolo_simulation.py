@@ -64,7 +64,7 @@ class YoloSimulacao(Node):
         package_share = get_package_share_directory('Webots_YOLOv8')
         green_csv = os.path.join(package_share, 'recursos', 'green_pixels.csv')
 
-        # 1. IA: pesos em modelo/, escolhidos na partida (veja config/vision_params.yaml)
+        # 1. IA: pesos em share/Webots_YOLOv8/modelo/, escolhidos na partida
         self.declare_parameter('model_file', ri.DEFAULT_MODEL_FILE)
         self.declare_parameter('strict_class_check', True)
         self.startup_values = {

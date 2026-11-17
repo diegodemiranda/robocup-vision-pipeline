@@ -6,14 +6,14 @@
 # Exemplos:
 #   ./robot.sh run camera_topic:=/usb_cam/image_raw camera_info_topic:=/usb_cam/camera_info
 #   MODEL=/home/robo/pesos/best.pt ./robot.sh run show_window:=true
-# Variáveis: ROS_DISTRO (humble) | WS (~/robot_ws) | MODEL (modelo/best.pt) | NOBUILD=1
+# Variáveis: ROS_DISTRO (humble) | WS (~/robot_ws) | MODEL (src/Webots_YOLOv8/models/best.pt) | NOBUILD=1
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISTRO="${ROS_DISTRO:-humble}"
 WS="${WS:-$HOME/robot_ws}"
 PKG="Webots_YOLOv8"
-MODEL="${MODEL:-$REPO/modelo/best.pt}"
+MODEL="${MODEL:-$REPO/src/Webots_YOLOv8/models/best.pt}"
 PATCH="$REPO/docs/pt/patches/soccer_ipm_camera_info.patch"
 
 die() { echo "ERRO: $*" >&2; exit 1; }
@@ -45,7 +45,7 @@ cmd_setup() {
   rosdep install --from-paths src --ignore-src -r -y
   python3 -c "import ultralytics" 2>/dev/null || pip3 install --user ultralytics "numpy<2" \
     || pip3 install --user --break-system-packages ultralytics "numpy<2"
-  echo "setup OK. Coloque os pesos em $REPO/modelo/best.pt (ou use MODEL=...) e rode ./robot.sh"
+  echo "setup OK. Coloque os pesos em $MODEL (ou use MODEL=...) e rode ./robot.sh"
 }
 
 cmd_build() {

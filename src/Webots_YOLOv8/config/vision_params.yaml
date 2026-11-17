@@ -28,7 +28,7 @@ vision_node:
       head_tilted_up: false        # true = varredura de baixo para cima
 
     # Faixas HSV (OpenCV: H 0-179, S/V 0-255), SEMPRE inteiros.
-    # Padrão: campo derivado de recursos/green_pixels.csv (+ margem); branco S/V de
+    # Padrão: campo derivado de share/Webots_YOLOv8/recursos/green_pixels.csv (+ margem); branco S/V de
     # def_white_threshold.py com hue livre. Descomente para fixar valores.
     # O vermelho usa hue circular (min > max).
     # hsv:

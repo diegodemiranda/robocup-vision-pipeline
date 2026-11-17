@@ -65,7 +65,8 @@ vCPU). O nó ROS desliga os pontos de linha (`n_line_samples=0`: não são calcu
 das interseções usa a máscara de marcações diretamente.
 
 **Calibração.** As faixas de cor precisam ser calibradas para a sua câmera e iluminação. No nó, a faixa do campo
-vem de `recursos/green_pixels.csv` (veja `recursos/README.md`) e pode ser sobrescrita por `hsv.*_min/max`.
+vem de `src/Webots_YOLOv8/data/green_pixels.csv` (veja `src/Webots_YOLOv8/data/README.md`) e pode ser
+sobrescrita por `hsv.*_min/max`.
 
 ## A validação: a detecção só vale dentro da área segmentada
 
@@ -104,7 +105,7 @@ O `soccer_ipm` descarta objetos cujo ponto de apoio cai nos 20% inferiores da im
 
 | Parâmetro | Padrão | Efeito |
 |---|---|---|
-| `model_file` | `best.pt` | Pesos: nome em `modelo/` ou **caminho absoluto**. **Só na partida** |
+| `model_file` | `best.pt` | Pesos: nome instalado em `share/Webots_YOLOv8/modelo/` ou **caminho absoluto**. **Só na partida** |
 | `strict_class_check` | `true` | Recusa na partida um modelo cujas classes não sejam as do nó. **Só na partida** |
 | `show_window` | `true` | Janela do OpenCV (argumento do launch; `false` para rodar sem display) |
 | `publish_segmentation` | `true` | Publica fronteira e obstáculos |
@@ -119,7 +120,7 @@ O `soccer_ipm` descarta objetos cujo ponto de apoio cai nos 20% inferiores da im
 
 Tudo, exceto `model_file` e `strict_class_check`, pode ser alterado em execução com `ros2 param set`. Uma
 alteração inválida (por exemplo, matiz fora de 0–179) é **recusada inteira** e o nó mantém os valores anteriores.
-Os valores padrão estão em [`config/vision_params.yaml`](../config/vision_params.yaml).
+Os valores padrão estão em [`src/Webots_YOLOv8/config/vision_params.yaml`](../src/Webots_YOLOv8/config/vision_params.yaml).
 
 ## Esquema de classes do detector
 
@@ -150,7 +151,7 @@ listando as divergências. `strict_class_check:=false` rebaixa isso a um aviso. 
 
 - **O tópico da câmera é fixo** (`CAMERA_TOPIC` em `yolo_simulation.py`: `/AUREA/camera_optical_frame/image_color`).
   Para outra câmera, use um remap: `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/minha/camera`.
-  No `launch/vision.launch.py`, os remaps do `soccer_ipm` também apontam para os tópicos do AUREA.
+  No `src/Webots_YOLOv8/launch/vision.launch.py`, os remaps do `soccer_ipm` também apontam para os tópicos do AUREA.
 - **Formato de saída único**: as mensagens são `soccer_vision_2d_msgs`. Se o seu behavior consome outro formato,
   é preciso um adaptador (não incluído).
 - **Um robô, uma câmera**: não há suporte a várias câmeras nem a distorção de lente (`use_distortion` está `false`).

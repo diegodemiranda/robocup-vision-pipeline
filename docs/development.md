@@ -9,7 +9,7 @@ Ambientes, dependências, testes, ferramentas e procedimentos de manutenção.
 | mudar o algoritmo de segmentação | `src/pipeline/` (sem ROS) |
 | mudar as regras de validação | `src/Webots_YOLOv8/detection_validator.py` |
 | trocar o esquema de classes | `detections.py` (`YoloClass`, `EXPECTED_CLASS_NAMES`) + validador + `vision_messages.py` |
-| adicionar um parâmetro | `vision_parameters.py` (declaração + leitura) e `config/vision_params.yaml` |
+| adicionar um parâmetro | `vision_parameters.py` (declaração + leitura) e `src/Webots_YOLOv8/config/vision_params.yaml` |
 | mudar o que o nó publica | `yolo_simulation.py` e `vision_messages.py` |
 | avaliar/treinar modelos | `src/Webots_YOLOv8/tools/` |
 
@@ -85,15 +85,17 @@ Os dois modos de build funcionam. `src/pipeline` e `src/Webots_YOLOv8` ficam sob
 com dois diretórios-raiz de pacotes, o `setup.py develop` legado deixava `Webots_YOLOv8` fora do
 `sys.path`. Os pacotes `pipeline` e `Webots_YOLOv8` são instalados lado a lado.
 
-Pesos em `modelo/` **antes** do build são instalados em `share/Webots_YOLOv8/modelo/`. Com
+Pesos em `src/Webots_YOLOv8/models/` **antes** do build são instalados em `share/Webots_YOLOv8/modelo/`. Com
 `--symlink-install`, arquivos adicionados depois não aparecem; use um caminho absoluto em `model_file`.
 
 ## Testes
 
-Os testes rodam direto da árvore de fontes: `test/conftest.py` põe `src/` no `sys.path`, então **não é
-preciso instalar nada** para os testes sem ROS.
+Os testes rodam direto da árvore de fontes: `test/conftest.py` põe `src/` no `sys.path`, então não é
+preciso instalar o pacote ROS para executar os testes que não dependem dele. As dependências Python desses
+testes estão em `requirements.txt`:
 
 ```bash
+pip install -r requirements.txt
 python -m pytest test -q                    # tudo o que o ambiente permitir
 python -m pytest test/test_pipeline_cli.py  # um arquivo
 ```

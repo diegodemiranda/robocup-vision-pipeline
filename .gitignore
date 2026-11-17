@@ -229,9 +229,9 @@ install/
 log/
 
 # Pesos e modelos exportados: NÃO versionar (veja README, "Pesos do detector").
-# A pasta modelo/ existe só para o `colcon build` instalar os pesos que você colocar nela.
-modelo/*
-!modelo/.gitkeep
+# A pasta de modelos existe só para o `colcon build` instalar pesos locais.
+src/Webots_YOLOv8/models/*
+!src/Webots_YOLOv8/models/.gitkeep
 *.pt
 *.pth
 *.onnx

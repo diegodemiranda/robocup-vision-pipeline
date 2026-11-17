@@ -19,12 +19,16 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
-        (os.path.join('share', package_name, 'recursos'), glob('recursos/*.csv')),
+        (os.path.join('share', package_name, 'launch'),
+         glob('src/Webots_YOLOv8/launch/*.launch.py')),
+        (os.path.join('share', package_name, 'config'),
+         glob('src/Webots_YOLOv8/config/*.yaml')),
+        (os.path.join('share', package_name, 'recursos'),
+         glob('src/Webots_YOLOv8/data/*.csv')),
         # Pesos NÃO acompanham o repositório (veja o README). Se você colocar .pt/.onnx em
-        # modelo/ ANTES do `colcon build`, eles são instalados e `model_file:=nome.pt` os acha.
-        (os.path.join('share', package_name, 'modelo'), glob('modelo/*.pt') + glob('modelo/*.onnx')),
+        # src/Webots_YOLOv8/models/ ANTES do `colcon build`, eles são instalados.
+        (os.path.join('share', package_name, 'modelo'),
+         glob('src/Webots_YOLOv8/models/*.pt') + glob('src/Webots_YOLOv8/models/*.onnx')),
     ],
 
     # Segmentação (pacote `pipeline`): numpy, OpenCV e pandas. O detector é opcional.
