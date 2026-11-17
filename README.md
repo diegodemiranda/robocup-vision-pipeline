@@ -41,9 +41,9 @@ medições e avaliem outras arquiteturas. Detalhes em [`docs/architecture.md`](d
 | Integração ROS 2 (nó, launch, mensagens) | **Testada**: build com `colcon` e 46 testes passando com `rclpy` e `soccer_ipm` **reais** |
 | Segmentação independente (`python -m pipeline`) | **Testada**, inclusive com um teste que garante a independência de ROS e do detector |
 | Comparação de velocidade YOLOv8n × YOLO26n | **Documentada** em [`docs/benchmarks.md`](docs/benchmarks.md) (1 vCPU, imagens sintéticas) |
-| Equivalência de **acurácia** YOLOv8n × YOLO26n | **Não estabelecida.** Falta treinar o YOLO26n no mesmo dataset e avaliar a 320 px |
-| Pesos treinados | **Não distribuídos** (veja [Pesos do detector](#pesos-do-detector)) |
-| Execução no Webots / no robô real | **Não realizada** nesta validação. `robot.sh`, `vision_robot.launch.py` e `usb_camera.py` só tiveram a sintaxe conferida ([como usar](#executando-no-robô-real-câmera-usb)) |
+| Equivalência de **acurácia** YOLOv8n × YOLO26n | **Não estabelecida.:** Falta treinar o YOLO26n no mesmo dataset e avaliar a 320 px |
+| Pesos treinados | **Apenas distribuídos para YOLOv8n** (veja [Pesos do detector](#pesos-do-detector)) |
+| Execução no Webots / no robô real | **Não realizada:** `robot.sh`, `vision_robot.launch.py` e `usb_camera.py` só tiveram a sintaxe conferida ([como usar](#executando-no-robô-real-câmera-usb)). |
 | Licença | `LICENSE` (MIT) mantida; **revisão pendente** (veja [Licença e proveniência](#licença-e-proveniência)) |
 
 ## Resultados em destaque
@@ -70,7 +70,7 @@ completo soma conversão da imagem, YOLO, segmentação (≈2,5 ms), validação
 
 ## Evidências visuais
 
-**Captura real do Webots (robô AUREA).** Detecções do YOLO (traves e interseções L/T/X) sobre a câmera do simulador.
+**Captura real do Webots (robô AUREA):** Detecções do YOLO (traves e interseções L/T/X) sobre a câmera do simulador.
 É do [projeto de simulação](https://github.com/ivan-josef/Webots_YOLOv8) e mostra a versão **anterior** (só YOLO,
 **sem** a validação por segmentação):
 
@@ -78,13 +78,13 @@ completo soma conversão da imagem, YOLO, segmentação (≈2,5 ms), validação
 
 ![Arquitetura](docs/img/architecture.png)
 
-**Segmentação do campo.** Fronteira do campo (laranja), obstáculos classificados por cor e pontos sobre as linhas
+**Segmentação do campo:** Fronteira do campo (laranja), obstáculos classificados por cor e pontos sobre as linhas
 (ciano), gerados por `python -m pipeline`:
 
 ![Segmentação do campo](docs/img/segmentation_synthetic.png)
 
-**Validação das detecções.** Área azul clara: região em que as detecções valem. Verde: aceitas. Vermelho:
-rejeitadas, com o motivo (`outside_field`: bola no céu; `no_marking`: interseção L sobre grama). Cinza: classe
+**Validação das detecções:** Área azul clara: região em que as detecções valem; Verde: aceitas; Vermelho:
+rejeitadas, com o motivo (`outside_field`: bola no céu; `no_marking`: interseção L sobre grama); Cinza: classe
 ignorada (travessão):
 
 ![Validação das detecções](docs/img/validation_overlay_synthetic.png)
@@ -134,8 +134,7 @@ comandos `ros2 launch`/`ros2 run`).
 | **ROS 2 Humble** (RoboStack/conda-forge), Python 3.14 | **Verificado**: `colcon build` normal e `--symlink-install`; suíte com `rclpy` e `soccer_ipm` reais |
 | **Ubuntu 22.04 + ROS 2 Humble (apt) + Webots**, Python 3.10 (o ambiente-alvo) | **Não testado de ponta a ponta.** Esperado funcionar; o código foi conferido no Python 3.10 com as versões numéricas do apt |
 
-Os comandos de `apt`/`rosdep` abaixo **não foram executados** por quem escreveu este README. Detalhes em
-[`docs/development.md`](docs/development.md#ambientes-de-referência).
+Detalhes em [`docs/development.md`](docs/development.md#ambientes-de-referência).
 
 ### 1. Só a segmentação (sem ROS, sem detector)
 
@@ -251,14 +250,12 @@ ros2 run my_package keyboard_teleop                                             
 ros2 topic echo /balls_relative                                                     # posição da bola em metros
 ```
 
-> O executável de teleoperação se chama `keyboard_teleop` no `setup.py` do `my_package`; o README antigo citava
-> `keyboard_controller`, que não existe. Todos os tópicos que terminam em `_relative` trazem as posições em metros.
+> O executável de teleoperação se chama `keyboard_teleop` no `setup.py` do `my_package`; Todos os tópicos que terminam em `_relative` trazem as posições em metros.
 
-### Executando no robô real (câmera USB)
+### Executando no robô real
 
 Os arquivos `robot.sh`, `launch/vision_robot.launch.py` e `src/Webots_YOLOv8/usb_camera.py` existem para rodar o
-pipeline **sem simulador**, com câmera USB (`/dev/video<id>`) e um único comando. **Não foram testados em robô real
-nem com ROS 2 instalado** (apenas conferência de sintaxe); trate o primeiro uso como um teste de bancada.
+pipeline **sem simulador**, com câmera USB (`/dev/video<id>`) e um único comando. **Não foram testados em robô real** (apenas conferência de sintaxe); trate o primeiro uso como um teste de bancada.
 
 | Arquivo | Função |
 |---|---|
@@ -266,11 +263,12 @@ nem com ROS 2 instalado** (apenas conferência de sintaxe); trate o primeiro uso
 | `launch/vision_robot.launch.py` | Sobe câmera USB + nó de visão + `soccer_ipm` (+ TF estático opcional), com relógio real |
 | `src/Webots_YOLOv8/usb_camera.py` | Nó `usb_camera` (`ros2 run Webots_YOLOv8 usb_camera`): lê `/dev/video<id>` com OpenCV e publica `Image` e `CameraInfo` |
 
-Diferenças para o `vision.launch.py` (simulador, mantido como estava): `use_sim_time` desligado; câmera própria em
+**Diferenças para o `vision.launch.py` (simulador)**\
+`use_sim_time` desligado; câmera própria em
 vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `camera_info_topic`, `camera_frame`,
 `output_frame`); janela de debug desligada por padrão; `soccer_ipm` opcional (`use_ipm:=false`).
 
-**Pré-requisitos**
+**Pré-requisitos:**
 
 - Ubuntu 22.04 com **ROS 2 Humble** instalado (`/opt/ros/humble`). Outra distro: `ROS_DISTRO=<nome> ./robot.sh ...`
   (só Humble foi considerado).
@@ -278,7 +276,7 @@ vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `
 - Os **pesos** do detector (`best.pt`); eles não estão no repositório (veja [Pesos do detector](#pesos-do-detector)).
 - Câmera USB visível em `/dev/video<id>` e usuário no grupo `video`.
 
-**Passo a passo**
+**Passo a passo:**
 
 1. **Copie o repositório** para o robô (`git clone` ou `scp`/pendrive) e entre na pasta:
    `cd robocup-vision-pipeline`.
@@ -314,15 +312,16 @@ vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `
 (`camera_optical_frame`, `frame_id` da imagem e do `CameraInfo`, que o `soccer_ipm` usa no TF), `output_frame` (`base_link`; frame de saída em metros) e, para o TF, `publish_tf` (false) com `cam_x`, `cam_y`,
 `cam_z` (m), `cam_roll`, `cam_pitch`, `cam_yaw` (rad).
 
-**O que o `./robot.sh` NÃO resolve (faça antes de confiar nas medidas)**
+**O que o `./robot.sh` NÃO resolve automáticamente:**
 
 1. **TF `base_link` → `camera_optical_frame`.** O `soccer_ipm` precisa dessa transformação para dar metros. Se o
    robô já a publica (modelo URDF, `robot_state_publisher`), não faça nada. Caso contrário, informe a pose da câmera
    no corpo do robô: `./robot.sh run publish_tf:=true cam_x:=0.05 cam_z:=0.45 cam_pitch:=0.35`. Convenção do corpo:
-   x à frente, y à esquerda, z para cima; `cam_pitch` positivo olha para baixo. Os valores acima são **exemplos**.
+   x à frente, y à esquerda, z para cima; `cam_pitch` positivo olha para baixo. Os valores acima são **exemplos**.\
 2. **Calibração intrínseca.** O `CameraInfo` do `usb_camera` é **estimado** (pinhole a partir de `hfov_deg`, sem
    distorção). Sem calibrar (xadrez + `camera_calibration`), as distâncias em metros ficam erradas. Passe `fx`,
    `fy`, `cx`, `cy` ao nó (`--ros-args -p fx:=...`) quando tiver os valores.
+
 3. **Calibração de cor (HSV).** O verde padrão vem de `recursos/green_pixels.csv`, amostrado no **campo simulado do
    Webots**; ele **não serve para um campo real** ou outra iluminação. Sem ajustar, a validação tende a rejeitar
    detecções corretas (`outside_field`). Defina as faixas no `config/vision_params.yaml` (bloco `hsv:`) ou em
@@ -330,7 +329,7 @@ vez do Webots; tópicos e frames configuráveis por argumento (`camera_topic`, `
 4. **Se não houver internet no robô**, rode o `setup` antes, em outra rede, no próprio robô.
 5. **Hardware.** O PyTorch roda em CPU. O desempenho medido (≈20 ms/frame) foi em 1 vCPU de x86; em ARM ou em
    computador embarcado fraco, meça (`ros2 topic hz /balls_in_image`) e, se preciso, reduza `width`/`height`/`fps`.
-6. **Duas câmeras.** O nó de visão assina um único tópico. Para usar as duas ao mesmo tempo é preciso uma segunda
+6. **Duas câmeras.** O nó de visão assina um único tópico. Para usar duas câmeras ao mesmo tempo é preciso uma segunda
    instância com outro namespace; isso **não** está implementado.
 
 **Problemas comuns.** `Não foi possível abrir /dev/video0`: índice errado, falta do grupo `video` ou outra
@@ -339,8 +338,8 @@ TF e `camera_info` (itens 1 e 2). O nó recusa a partida listando classes: o mod
 
 ## Pesos do detector
 
-**Os pesos não estão neste repositório** (`modelo/` só tem um `.gitkeep`, e o `.gitignore` exclui `*.pt` e
-`*.onnx`). O nó precisa deles para iniciar.
+Apenas os **pesos do YOLOv8n** estão no repositírio (diretório `modelo/`). O nó precisa deles para iniciar
+
 
 | Arquivo | Arquitetura | Classes | Treino | Tamanho | SHA-256 |
 |---|---|---|---|---|---|
@@ -350,15 +349,11 @@ TF e `camera_info` (itens 1 e 2). O nó recusa a partida listando classes: o mod
 Métricas que o `best.pt` registra da própria validação de treino (a 640 px): precisão 0,944, recall 0,926,
 mAP50 0,968, mAP50-95 0,685.
 
-**Onde obter.** Ainda **não há um endereço público** para o `best.pt`. O mecanismo recomendado é um
-[GitHub Release](https://docs.github.com/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
-deste repositório, com o arquivo, o SHA-256 acima e um *model card*, **depois** de verificados os termos de
-redistribuição (checklist em [`docs/development.md`](docs/development.md#publicar-pesos-treinados): AGPL-3.0 do
-Ultralytics, licença do dataset e autoria do treino). Quando publicado, o endereço entra nesta seção. Enquanto
-isso, você pode (a) obter o arquivo com quem o treinou, ou (b) **treinar o seu** com a receita reprodutível
-(`python -m Webots_YOLOv8.tools.train_yolo26n`; veja [Avaliação](#avaliação-e-reprodutibilidade)).
+**Como obter**:
+Você pode (a) obter o arquivo com quem o treinou, ou (b) **treinar o seu** com a receita reprodutível (`python -m Webots_YOLOv8.tools.train_yolo26n`; veja [Avaliação](#avaliação-e-reprodutibilidade)).
 
-**Como configurar `model_file`.** O parâmetro aceita um **caminho absoluto** ou um nome de arquivo em `modelo/`:
+**Como configurar `model_file`:**\
+O parâmetro aceita um **caminho absoluto** ou um nome de arquivo em `modelo/`:
 
 ```bash
 # 1) caminho absoluto (o mais simples; funciona com qualquer modo de build)
@@ -422,7 +417,7 @@ submódulo, `pip install` nem import entre os dois, e cada um funciona sem o out
 **reescrito** (classe `VisionPipeline`, reescala, fusão com o YOLO). Por isso **correções feitas em um não chegam
 sozinhas ao outro**; a sincronia é manual (procedimento em [`docs/development.md`](docs/development.md#relação-com-o-repositório-de-segmentação)).
 
-**Quando usar cada um.**
+**Quando usar cada um:**
 
 - **Repositório de segmentação**: para estudar ou ensinar o algoritmo em sua forma mais enxuta, adaptá-lo a outro
   detector, linguagem ou middleware, ou usá-lo sem nenhuma outra dependência além de numpy, OpenCV e pandas.
@@ -441,32 +436,6 @@ final sobre o licenciamento do projeto combinado ainda precisa ser revisada pelo
 pesos, imagens de contêiner ou o sistema integrado, pelos pontos abaixo. **Este README não é aconselhamento
 jurídico.**
 
-**Pontos a avaliar:**
-
-1. **Ultralytics (AGPL-3.0).** O código importa o pacote `ultralytics` (`running_inference.py` e as ferramentas),
-   distribuído sob **AGPL-3.0** (ou sob licença empresarial). A MIT deste repositório cobre o código escrito
-   aqui, mas **não altera os termos do Ultralytics**: quem redistribui, ou oferece como serviço de rede, uma
-   combinação que inclui o Ultralytics precisa atender à AGPL-3.0 para essa combinação. O código escrito aqui é
-   usável sem o Ultralytics (a segmentação não o importa), e o AGPL do Ultralytics é uma das razões pelas quais a
-   escolha de licença merece revisão.
-2. **Pesos.** Pesos treinados ou ajustados com o Ultralytics costumam ser tratados como sujeitos aos termos dele
-   (AGPL-3.0). A licença MIT do repositório **não cobre** os pesos.
-3. **Dataset.** O `best.pt` foi treinado em uma versão em formato YOLO do
-   [TORSO-21](https://github.com/bit-bots/TORSO_21_dataset), que declara licença MIT no `CITATION.cff` dele.
-   Confirme os termos das imagens originais e da versão convertida.
-4. **Proveniência do código e dos dados.** Partes deste repositório se baseiam no projeto de simulação
-   [`ivan-josef/Webots_YOLOv8`](https://github.com/ivan-josef/Webots_YOLOv8), cujo histórico é integralmente de
-   `ivan-josef`. Esse projeto **não tem arquivo `LICENSE` na raiz** (o `package.xml` do pacote declara MIT, sem
-   texto de licença nem aviso de copyright). Os arquivos afetados são `running_inference.py`, a estrutura do nó em
-   `yolo_simulation.py`, `launch/vision.launch.py`, o empacotamento (`setup.py`, `package.xml`) e
-   `recursos/green_pixels.csv`; o `best.pt` também veio desse trabalho. **Convém obter a confirmação explícita do
-   autor** (e, se for o caso, incluir o aviso de copyright dele).
-5. **Algoritmo de segmentação.** `src/pipeline/` deriva do repositório de segmentação (MIT, mesmo autor) e se
-   inspira no artigo do Hamburg Bit-Bots (veja [Como citar](#como-citar)).
-6. **Dependências de terceiros não incluídas.** `soccer_ipm`, `ipm` e `soccer_interfaces` (ros-sports, Apache-2.0)
-   são clonados à parte; numpy, pandas e OpenCV têm licenças permissivas próprias.
-
-**Se a licença mudar**, atualize `LICENSE`, `package.xml` (`<license>`), `setup.py` (`license`) e `CITATION.cff` (`license`).
 
 ## Como citar
 
@@ -481,7 +450,7 @@ segmentação se baseia em:
 ## Limitações conhecidas
 
 - **Acurácia do YOLO26n não medida**; sem YOLO26n treinado para as 7 classes (veja [Status](#status-do-projeto)).
-- **Benchmarks em 1 vCPU e imagens sintéticas**; nada medido no Webots nem no robô.
+- **Benchmarks em 1 vCPU e imagens sintéticas**; nada medido no robô.
 - **Tópico da câmera fixo** (`/AUREA/camera_optical_frame/image_color`). Para outra câmera:
   `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/minha/camera`.
   O `launch/vision.launch.py` também aponta os remaps do `soccer_ipm` para os tópicos do AUREA; edite-os.
@@ -530,9 +499,9 @@ evaluate other architectures. Details in [`docs/architecture.md`](docs/architect
 | ROS 2 integration (node, launch, messages) | **Tested**: `colcon` build and 46 tests passing with **real** `rclpy` and `soccer_ipm` |
 | Standalone segmentation (`python -m pipeline`) | **Tested**, including a test that guarantees independence from ROS and from the detector |
 | YOLOv8n × YOLO26n speed comparison | **Documented** in [`docs/benchmarks.md`](docs/benchmarks.md) (1 vCPU, synthetic images) |
-| YOLOv8n × YOLO26n **accuracy** equivalence | **Not established.** The YOLO26n still has to be trained on the same dataset and evaluated at 320 px |
-| Trained weights | **Not distributed** (see [Detector weights](#detector-weights)) |
-| Running in Webots / on the real robot | **Not done** in this validation. `robot.sh`, `vision_robot.launch.py` and `usb_camera.py` only had their syntax checked ([how to use](#running-on-the-real-robot-usb-camera)) |
+| YOLOv8n × YOLO26n **accuracy** equivalence | **Not established:** The YOLO26n still has to be trained on the same dataset and evaluated at 320 px |
+| Trained weights | **Distributed only for YOLOv8n** (see [Detector weights](#detector-weights)) |
+| Running in Webots / on the real robot | **Not done:** `robot.sh`, `vision_robot.launch.py` and `usb_camera.py` only had their syntax checked ([how to use](#running-on-the-real-robot)) |
 | License | `LICENSE` (MIT) kept; **review pending** (see [License and provenance](#license-and-provenance)) |
 
 ## Highlighted results
@@ -559,7 +528,7 @@ conversion, YOLO, segmentation (≈2.5 ms), validation (≈1.5 ms) and message a
 
 ## Visual evidence
 
-**Real Webots capture (AUREA robot).** YOLO detections (goalposts and L/T/X intersections) over the simulator camera. It comes
+**Real Webots capture (AUREA robot):** YOLO detections (goalposts and L/T/X intersections) over the simulator camera. It comes
 from the [simulation project](https://github.com/ivan-josef/Webots_YOLOv8) and shows the **previous** version (YOLO only,
 **without** the segmentation-based validation):
 
@@ -567,13 +536,13 @@ from the [simulation project](https://github.com/ivan-josef/Webots_YOLOv8) and s
 
 ![Architecture](docs/img/architecture.png)
 
-**Field segmentation.** Field boundary (orange), color-classified obstacles and points on the lines (cyan), produced by
+**Field segmentation:** Field boundary (orange), color-classified obstacles and points on the lines (cyan), produced by
 `python -m pipeline`:
 
 ![Field segmentation](docs/img/segmentation_synthetic.png)
 
-**Detection validation.** Light-blue area: region where detections are valid. Green: accepted. Red: rejected, with the reason
-(`outside_field`: ball in the sky; `no_marking`: L intersection on grass). Gray: ignored class (crossbar):
+**Detection validation:** Light-blue area: region where detections are valid; Green: accepted; Red: rejected, with the reason
+(`outside_field`: ball in the sky; `no_marking`: L intersection on grass); Gray: ignored class (crossbar):
 
 ![Detection validation](docs/img/validation_overlay_synthetic.png)
 
@@ -591,7 +560,7 @@ robocup-vision-pipeline/
 ├── config/vision_params.yaml                          # node parameters
 ├── launch/vision.launch.py                            # simulator: vision node + soccer_ipm
 ├── launch/vision_robot.launch.py                      # real robot: USB camera + vision + soccer_ipm
-├── modelo/                                            # WHERE to put the weights (empty; see "Detector weights")
+├── modelo/                                            # WHERE YOLOv8n weights are stored (see "Detector weights")
 ├── recursos/                                          # field-green calibration (+ README)
 ├── src/
 │   ├── pipeline/                                      # ALGORITHM: HSV segmentation, no ROS
@@ -622,8 +591,7 @@ robocup-vision-pipeline/
 | **ROS 2 Humble** (RoboStack/conda-forge), Python 3.14 | **Verified**: normal and `--symlink-install` `colcon build`; suite with real `rclpy` and `soccer_ipm` |
 | **Ubuntu 22.04 + ROS 2 Humble (apt) + Webots**, Python 3.10 (the target environment) | **Not tested end to end.** Expected to work; the code was checked on Python 3.10 with the apt numeric versions |
 
-The `apt`/`rosdep` commands below were **not executed** by whoever wrote this README. Details in
-[`docs/development.md`](docs/development.md#ambientes-de-referência).
+Details in [`docs/development.md`](docs/development.md#ambientes-de-referência).
 
 ### 1. Segmentation only (no ROS, no detector)
 
@@ -737,14 +705,13 @@ ros2 run my_package keyboard_teleop                                             
 ros2 topic echo /balls_relative                                                     # ball position in meters
 ```
 
-> The teleop executable is called `keyboard_teleop` in `my_package`'s `setup.py`; the old README mentioned
-> `keyboard_controller`, which does not exist. Every topic ending in `_relative` carries positions in meters.
+> The teleop executable is called `keyboard_teleop` in `my_package`'s `setup.py`; every topic ending in `_relative` carries positions in meters.
 
-### Running on the real robot (USB camera)
+### Running on the real robot
 
 `robot.sh`, `launch/vision_robot.launch.py` and `src/Webots_YOLOv8/usb_camera.py` run the pipeline **without the
-simulator**, with a USB camera (`/dev/video<id>`) and a single command. **They have not been tested on a real robot
-or with ROS 2 installed** (syntax check only); treat the first run as a bench test.
+simulator**, with a USB camera (`/dev/video<id>`) and a single command. **They have not been tested on a real robot**
+(syntax check only); treat the first run as a bench test.
 
 | File | Purpose |
 |---|---|
@@ -752,11 +719,12 @@ or with ROS 2 installed** (syntax check only); treat the first run as a bench te
 | `launch/vision_robot.launch.py` | Starts USB camera + vision node + `soccer_ipm` (+ optional static TF), on the real clock |
 | `src/Webots_YOLOv8/usb_camera.py` | `usb_camera` node (`ros2 run Webots_YOLOv8 usb_camera`): reads `/dev/video<id>` with OpenCV, publishes `Image` and `CameraInfo` |
 
-Differences from `vision.launch.py` (simulator, unchanged): `use_sim_time` off; own camera instead of Webots;
+**Differences from `vision.launch.py` (simulator)**\
+`use_sim_time` off; own camera instead of Webots;
 topics and frames set by arguments (`camera_topic`, `camera_info_topic`, `camera_frame`, `output_frame`); debug
 window off by default; `soccer_ipm` optional (`use_ipm:=false`).
 
-**Prerequisites**
+**Prerequisites:**
 
 - Ubuntu 22.04 with **ROS 2 Humble** (`/opt/ros/humble`). Another distro: `ROS_DISTRO=<name> ./robot.sh ...` (only
   Humble was considered).
@@ -764,7 +732,7 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
 - The detector **weights** (`best.pt`); not in the repository (see [Detector weights](#detector-weights)).
 - A USB camera visible as `/dev/video<id>` and your user in the `video` group.
 
-**Step by step**
+**Step by step:**
 
 1. **Copy the repository** to the robot (`git clone`, `scp` or USB stick) and `cd robocup-vision-pipeline`.
 2. **Permissions and tools** (log out/in after `usermod`):
@@ -799,7 +767,7 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
 (`camera_optical_frame`, `frame_id` of the image and `CameraInfo`, which `soccer_ipm` uses for TF), `output_frame` (`base_link`; output frame in metres) and, for TF, `publish_tf` (false) with `cam_x`, `cam_y`,
 `cam_z` (m), `cam_roll`, `cam_pitch`, `cam_yaw` (rad).
 
-**What `./robot.sh` does NOT solve (do this before trusting the measurements)**
+**What `./robot.sh` does NOT solve automatically:**
 
 1. **TF `base_link` → `camera_optical_frame`.** `soccer_ipm` needs it to output metres. If the robot already
    publishes it (URDF, `robot_state_publisher`), do nothing. Otherwise give the camera pose on the robot body:
@@ -808,6 +776,7 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
 2. **Intrinsic calibration.** `usb_camera`'s `CameraInfo` is **estimated** (pinhole from `hfov_deg`, no distortion).
    Without calibration (checkerboard + `camera_calibration`), distances in metres will be wrong. Pass `fx`, `fy`,
    `cx`, `cy` to the node (`--ros-args -p fx:=...`) once you have them.
+
 3. **Colour (HSV) calibration.** The default green comes from `recursos/green_pixels.csv`, sampled from the
    **simulated Webots field**; it **does not suit a real field** or other lighting. Unadjusted, validation tends to
    reject correct detections (`outside_field`). Set the ranges in `config/vision_params.yaml` (`hsv:` block) or at
@@ -815,7 +784,7 @@ window off by default; `soccer_ipm` optional (`use_ipm:=false`).
 4. **No internet on the robot?** Run `setup` beforehand, on another network, on the robot itself.
 5. **Hardware.** PyTorch runs on CPU. The measured performance (≈20 ms/frame) was on one x86 vCPU; on ARM or a weak
    embedded computer, measure (`ros2 topic hz /balls_in_image`) and, if needed, lower `width`/`height`/`fps`.
-6. **Two cameras.** The vision node subscribes to a single topic. Using both at once needs a second instance in
+6. **Two cameras.** The vision node subscribes to a single topic. Using two cameras at once needs a second instance in
    another namespace; this is **not** implemented.
 
 **Common problems.** `Não foi possível abrir /dev/video0` (cannot open): wrong index, missing `video` group, or
@@ -825,8 +794,7 @@ classes: the model does not follow the 7-class scheme.
 
 ## Detector weights
 
-**The weights are not in this repository** (`modelo/` only holds a `.gitkeep`, and `.gitignore` excludes `*.pt` and
-`*.onnx`). The node needs them to start.
+Only the **YOLOv8n weights** are in this repository (the `modelo/` directory). The node needs them to start.
 
 | File | Architecture | Classes | Training | Size | SHA-256 |
 |---|---|---|---|---|---|
@@ -836,15 +804,12 @@ classes: the model does not follow the 7-class scheme.
 Metrics that `best.pt` records from its own training validation (at 640 px): precision 0.944, recall 0.926,
 mAP50 0.968, mAP50-95 0.685.
 
-**Where to get them.** There is **no public address yet** for `best.pt`. The recommended mechanism is a
-[GitHub Release](https://docs.github.com/repositories/releasing-projects-on-github/managing-releases-in-a-repository)
-of this repository, with the file, the SHA-256 above and a *model card*, **after** the redistribution terms are verified
-(checklist in [`docs/development.md`](docs/development.md#publicar-pesos-treinados): Ultralytics AGPL-3.0, dataset license and
-training authorship). Once published, the address goes in this section. Meanwhile you can (a) obtain the file from whoever
-trained it, or (b) **train your own** with the reproducible recipe (`python -m Webots_YOLOv8.tools.train_yolo26n`; see
-[Evaluation](#evaluation-and-reproducibility)).
+**How to get them:**
+You can (a) obtain the file from whoever trained it, or (b) **train your own** with the reproducible recipe
+(`python -m Webots_YOLOv8.tools.train_yolo26n`; see [Evaluation](#evaluation-and-reproducibility)).
 
-**How to set `model_file`.** The parameter accepts an **absolute path** or a file name inside `modelo/`:
+**How to set `model_file`:**\
+The parameter accepts an **absolute path** or a file name inside `modelo/`:
 
 ```bash
 # 1) absolute path (simplest; works with any build mode)
@@ -908,7 +873,7 @@ repository's code (compared against commit `f301e4f`, from 2026-10-28): `field_b
 YOLO fusion). Therefore **fixes made in one do not reach the other by themselves**; syncing is manual (procedure in
 [`docs/development.md`](docs/development.md#relação-com-o-repositório-de-segmentação)).
 
-**When to use each.**
+**When to use each:**
 
 - **Segmentation repository**: to study or teach the algorithm in its leanest form, adapt it to another detector, language or
   middleware, or use it with no dependency beyond numpy, OpenCV and pandas.
@@ -924,31 +889,7 @@ feed the camera to this node; this repository originated from it.
 **Current state.** The [`LICENSE`](LICENSE) file of this repository is the **MIT license** (Copyright (c) 2026 Diego de
 Miranda), kept as it was. `package.xml`, `setup.py` and `CITATION.cff` reflect that license. **The final decision on the
 licensing of the combined project still has to be reviewed by the author** before distributing weights, container images or
-the integrated system, for the points below. **This README is not legal advice.**
-
-**Points to evaluate:**
-
-1. **Ultralytics (AGPL-3.0).** The code imports the `ultralytics` package (`running_inference.py` and the tools), distributed
-   under **AGPL-3.0** (or under an enterprise license). This repository's MIT covers the code written here but **does not change
-   Ultralytics' terms**: whoever redistributes, or offers as a network service, a combination that includes Ultralytics must
-   satisfy AGPL-3.0 for that combination. The code written here is usable without Ultralytics (the segmentation does not import
-   it), and Ultralytics' AGPL is one reason the license choice deserves review.
-2. **Weights.** Weights trained or fine-tuned with Ultralytics are usually treated as subject to its terms (AGPL-3.0). This
-   repository's MIT license **does not cover** the weights.
-3. **Dataset.** `best.pt` was trained on a YOLO-format version of [TORSO-21](https://github.com/bit-bots/TORSO_21_dataset), which
-   declares an MIT license in its `CITATION.cff`. Confirm the terms of the original images and of the converted version.
-4. **Code and data provenance.** Parts of this repository are based on the simulation project
-   [`ivan-josef/Webots_YOLOv8`](https://github.com/ivan-josef/Webots_YOLOv8), whose history is entirely by `ivan-josef`. That
-   project has **no `LICENSE` file at its root** (the package's `package.xml` declares MIT, with no license text or copyright
-   notice). The affected files are `running_inference.py`, the node structure in `yolo_simulation.py`,
-   `launch/vision.launch.py`, the packaging (`setup.py`, `package.xml`) and `recursos/green_pixels.csv`; `best.pt` also came from
-   that work. **It is advisable to get the author's explicit confirmation** (and, if appropriate, include their copyright notice).
-5. **Segmentation algorithm.** `src/pipeline/` derives from the segmentation repository (MIT, same author) and is inspired by the
-   Hamburg Bit-Bots paper (see [How to cite](#how-to-cite)).
-6. **Third-party dependencies not included.** `soccer_ipm`, `ipm` and `soccer_interfaces` (ros-sports, Apache-2.0) are cloned
-   separately; numpy, pandas and OpenCV have their own permissive licenses.
-
-**If the license changes**, update `LICENSE`, `package.xml` (`<license>`), `setup.py` (`license`) and `CITATION.cff` (`license`).
+the integrated system. **This README is not legal advice.**
 
 ## How to cite
 
@@ -962,11 +903,11 @@ Use the metadata in [`CITATION.cff`](CITATION.cff) (GitHub shows a **Cite this r
 ## Known limitations
 
 - **YOLO26n accuracy not measured**; no YOLO26n trained for the 7 classes (see [Project status](#project-status)).
-- **Benchmarks on 1 vCPU and synthetic images**; nothing measured in Webots or on the robot.
+- **Benchmarks on 1 vCPU and synthetic images**; nothing measured on the robot.
 - **Fixed camera topic** (`/AUREA/camera_optical_frame/image_color`). For another camera:
   `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/my/camera`.
   `launch/vision.launch.py` also points `soccer_ipm`'s remaps at the AUREA topics; edit them.
-  For the real robot use `launch/vision_robot.launch.py` (see [Running on the real robot](#running-on-the-real-robot-usb-camera)).
+  For the real robot use `launch/vision_robot.launch.py` (see [Running on the real robot](#running-on-the-real-robot)).
 - **Single output format** (`soccer_vision_2d_msgs`); another format requires an adapter, not included.
 - **Example HSV ranges** in `python -m pipeline` without `--hsv-csv`; calibrate for your camera.
 - **Target environment (Ubuntu 22.04 + Humble + Webots) not tested end to end.**
