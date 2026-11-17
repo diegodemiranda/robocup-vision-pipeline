@@ -28,6 +28,14 @@ def generate_launch_description():
         DeclareLaunchArgument('camera_frame', default_value='camera_optical_frame'),
         DeclareLaunchArgument('output_frame', default_value='base_link'),
         DeclareLaunchArgument('use_ipm', default_value='true'),
+        # TF: só se o robô NÃO publica base_link -> camera_optical_frame (veja o README).
+        DeclareLaunchArgument('publish_tf', default_value='false'),
+        DeclareLaunchArgument('cam_x', default_value='0.0'),      # m, em base_link (x à frente)
+        DeclareLaunchArgument('cam_y', default_value='0.0'),      # m (y à esquerda)
+        DeclareLaunchArgument('cam_z', default_value='0.5'),      # m (z para cima)
+        DeclareLaunchArgument('cam_roll', default_value='0.0'),   # rad
+        DeclareLaunchArgument('cam_pitch', default_value='0.0'),  # rad (positivo = olha para baixo)
+        DeclareLaunchArgument('cam_yaw', default_value='0.0'),    # rad
         DeclareLaunchArgument('start_camera', default_value='true'),
         DeclareLaunchArgument('camera_id', default_value='0'),       # /dev/video<id>
         DeclareLaunchArgument('width', default_value='1280'),
@@ -35,6 +43,22 @@ def generate_launch_description():
         DeclareLaunchArgument('fps', default_value='30.0'),
         DeclareLaunchArgument('hfov_deg', default_value='90.0'),     # estimativa; calibre a câmera
     ]
+
+    # base_link -> camera_link (pose da câmera no corpo) -> camera_optical_frame (convenção óptica:
+    # z à frente, x à direita, y para baixo; rotação fixa roll=-90°, yaw=-90°).
+    tf_body = Node(
+        package='tf2_ros', executable='static_transform_publisher', name='camera_tf_body',
+        condition=IfCondition(LC('publish_tf')),
+        arguments=['--x', LC('cam_x'), '--y', LC('cam_y'), '--z', LC('cam_z'),
+                   '--roll', LC('cam_roll'), '--pitch', LC('cam_pitch'), '--yaw', LC('cam_yaw'),
+                   '--frame-id', LC('output_frame'), '--child-frame-id', 'camera_link'],
+    )
+    tf_optical = Node(
+        package='tf2_ros', executable='static_transform_publisher', name='camera_tf_optical',
+        condition=IfCondition(LC('publish_tf')),
+        arguments=['--roll', '-1.5707963', '--pitch', '0', '--yaw', '-1.5707963',
+                   '--frame-id', 'camera_link', '--child-frame-id', LC('camera_frame')],
+    )
 
     camera = Node(
         package='Webots_YOLOv8',
@@ -80,14 +104,12 @@ def generate_launch_description():
         parameters=[
             {'use_sim_time': False},
             {'output_frame': ParameterValue(LC('output_frame'), value_type=str)},
-            {'camera_frame': ParameterValue(LC('camera_frame'), value_type=str)},
             {'balls.ball_diameter': 0.14},
             {'use_distortion': False},
         ],
         remappings=[
-            ('camera/image_raw', LC('camera_topic')),
             ('camera_info', LC('camera_info_topic')),
         ],
     )
 
-    return LaunchDescription(args + [camera, vision, ipm])
+    return LaunchDescription(args + [tf_body, tf_optical, camera, vision, ipm])

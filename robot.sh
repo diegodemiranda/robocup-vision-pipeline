@@ -25,6 +25,11 @@ source_ws() { [ -f "$WS/install/setup.bash" ] && { set +u; source "$WS/install/s
 
 cmd_setup() {
   source_ros
+  for c in git colcon rosdep pip3; do
+    command -v "$c" >/dev/null || die "'$c' ausente. Instale: sudo apt install git python3-pip python3-colcon-common-extensions python3-rosdep ros-$DISTRO-tf2-ros"
+  done
+  [ -f /etc/ros/rosdep/sources.list.d/20-default.list ] || sudo rosdep init
+  rosdep update
   mkdir -p "$WS/src"; cd "$WS/src"
   ln -sfn "$REPO" "$WS/src/robocup-vision-pipeline"
   [ -d soccer_interfaces ] || git clone -b "$DISTRO" https://github.com/ros-sports/soccer_interfaces.git
@@ -38,8 +43,8 @@ cmd_setup() {
   fi
   cd "$WS"
   rosdep install --from-paths src --ignore-src -r -y
-  python3 -c "import ultralytics" 2>/dev/null || pip3 install --user ultralytics \
-    || pip3 install --user --break-system-packages ultralytics
+  python3 -c "import ultralytics" 2>/dev/null || pip3 install --user ultralytics "numpy<2" \
+    || pip3 install --user --break-system-packages ultralytics "numpy<2"
   echo "setup OK. Coloque os pesos em $REPO/modelo/best.pt (ou use MODEL=...) e rode ./robot.sh"
 }
 
