@@ -44,6 +44,7 @@ setup(
     entry_points={
         'console_scripts': [
             'finder = Webots_YOLOv8.yolo_simulation:main',
+            'usb_camera = Webots_YOLOv8.usb_camera:main',
         ],
     },
 )
