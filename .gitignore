@@ -241,4 +241,5 @@ src/Webots_YOLOv8/models/*
 # Saídas de treino e de benchmark
 runs/
 comparison/
+calibracao/
 resultados/
