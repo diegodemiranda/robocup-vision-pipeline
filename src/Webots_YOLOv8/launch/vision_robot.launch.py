@@ -42,6 +42,13 @@ def generate_launch_description():
         DeclareLaunchArgument('height', default_value='720'),
         DeclareLaunchArgument('fps', default_value='30.0'),
         DeclareLaunchArgument('hfov_deg', default_value='90.0'),     # estimativa; calibre a câmera
+        # Intrínsecos calibrados (python -m pipeline.calibrate intrinsics); 0 = estimar por hfov_deg.
+        DeclareLaunchArgument('fx', default_value='0.0'),
+        DeclareLaunchArgument('fy', default_value='0.0'),
+        DeclareLaunchArgument('cx', default_value='0.0'),
+        DeclareLaunchArgument('cy', default_value='0.0'),
+        # Faixas HSV calibradas (python -m pipeline.calibrate hsv): sobrepõem as de config/vision_params.yaml.
+        DeclareLaunchArgument('params_file', default_value=config_file),
     ]
 
     # base_link -> camera_link (pose da câmera no corpo) -> camera_optical_frame (convenção óptica:
@@ -72,6 +79,10 @@ def generate_launch_description():
             'height': ParameterValue(LC('height'), value_type=int),
             'fps': ParameterValue(LC('fps'), value_type=float),
             'hfov_deg': ParameterValue(LC('hfov_deg'), value_type=float),
+            'fx': ParameterValue(LC('fx'), value_type=float),
+            'fy': ParameterValue(LC('fy'), value_type=float),
+            'cx': ParameterValue(LC('cx'), value_type=float),
+            'cy': ParameterValue(LC('cy'), value_type=float),
             'frame_id': ParameterValue(LC('camera_frame'), value_type=str),
             'image_topic': ParameterValue(LC('camera_topic'), value_type=str),
             'info_topic': ParameterValue(LC('camera_info_topic'), value_type=str),
@@ -86,6 +97,7 @@ def generate_launch_description():
         emulate_tty=True,
         parameters=[
             config_file,
+            LC('params_file'),      # depois do padrão: o que foi calibrado prevalece
             {
                 'use_sim_time': False,
                 'show_window': ParameterValue(LC('show_window'), value_type=bool),
