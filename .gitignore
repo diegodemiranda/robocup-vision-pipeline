@@ -233,7 +233,7 @@ log/
 src/Webots_YOLOv8/models/*
 !src/Webots_YOLOv8/models/.gitkeep
 *.pt
-!modelo/best.pt
+!src/Webots_YOLOv8/models/best.pt
 *.pth
 *.onnx
 *.engine
