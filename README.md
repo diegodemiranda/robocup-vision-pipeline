@@ -97,7 +97,7 @@ ignorada (travessão):
 
 ```
 robocup-vision-pipeline/
-├── README.md  LICENSE  CITATION.cff  .gitignore  requirements.txt
+├── README.md  LICENSE  .gitignore  requirements.txt
 ├── robot.sh                                           # launcher do robô real: setup | build | run
 ├── package.xml  setup.py  setup.cfg  resource/        # pacote ROS 2 (ament_python): Webots_YOLOv8
 ├── src/
@@ -435,21 +435,11 @@ que fornecem a câmera a este nó; este repositório se originou dele.
 ## Licença e proveniência
 
 **Estado atual.** O arquivo [`LICENSE`](LICENSE) deste repositório é a **licença MIT** (Copyright (c) 2026 Diego de
-Miranda), mantida como estava. `package.xml`, `setup.py` e `CITATION.cff` refletem essa licença. **A decisão
+Miranda), mantida como estava. `package.xml` e `setup.py` refletem essa licença. **A decisão
 final sobre o licenciamento do projeto combinado ainda precisa ser revisada pelo autor** antes de distribuir
 pesos, imagens de contêiner ou o sistema integrado, pelos pontos abaixo. **Este README não é aconselhamento
 jurídico.**
 
-
-## Como citar
-
-Use os metadados de [`CITATION.cff`](CITATION.cff) (o GitHub mostra o botão **Cite this repository**). A
-segmentação se baseia em:
-
-- N. Fiedler, H. Brandt, J. Gutsche, F. Vahl, J. Hagge, M. Bestmann. *An Open Source Vision Pipeline Approach for
-  RoboCup Humanoid Soccer*. RoboCup 2019: Robot World Cup XXIII. DOI [10.1007/978-3-030-35699-6_29](https://doi.org/10.1007/978-3-030-35699-6_29).
-- M. Bestmann et al. *TORSO-21 Dataset: Typical Objects in RoboCup Soccer 2021*. DOI
-  [10.1007/978-3-030-98682-7_6](https://doi.org/10.1007/978-3-030-98682-7_6).
 
 ## Limitações conhecidas
 
@@ -558,7 +548,7 @@ from the [simulation project](https://github.com/ivan-josef/Webots_YOLOv8) and s
 
 ```
 robocup-vision-pipeline/
-├── README.md  LICENSE  CITATION.cff  .gitignore  requirements.txt
+├── README.md  LICENSE  .gitignore  requirements.txt
 ├── robot.sh                                           # real-robot launcher: setup | build | run
 ├── package.xml  setup.py  setup.cfg  resource/        # ROS 2 package (ament_python): Webots_YOLOv8
 ├── src/
@@ -893,18 +883,10 @@ feed the camera to this node; this repository originated from it.
 ## License and provenance
 
 **Current state.** The [`LICENSE`](LICENSE) file of this repository is the **MIT license** (Copyright (c) 2026 Diego de
-Miranda), kept as it was. `package.xml`, `setup.py` and `CITATION.cff` reflect that license. **The final decision on the
+Miranda), kept as it was. `package.xml` and `setup.py` reflect that license. **The final decision on the
 licensing of the combined project still has to be reviewed by the author** before distributing weights, container images or
 the integrated system. **This README is not legal advice.**
 
-## How to cite
-
-Use the metadata in [`CITATION.cff`](CITATION.cff) (GitHub shows a **Cite this repository** button). The segmentation is based on:
-
-- N. Fiedler, H. Brandt, J. Gutsche, F. Vahl, J. Hagge, M. Bestmann. *An Open Source Vision Pipeline Approach for
-  RoboCup Humanoid Soccer*. RoboCup 2019: Robot World Cup XXIII. DOI [10.1007/978-3-030-35699-6_29](https://doi.org/10.1007/978-3-030-35699-6_29).
-- M. Bestmann et al. *TORSO-21 Dataset: Typical Objects in RoboCup Soccer 2021*. DOI
-  [10.1007/978-3-030-98682-7_6](https://doi.org/10.1007/978-3-030-98682-7_6).
 
 ## Known limitations
 
