@@ -8,8 +8,8 @@ Como a imagem da câmera vira detecções **validadas** que o `soccer_ipm` conve
 
 | Pacote | Onde | Papel | Depende de ROS? |
 |---|---|---|---|
-| `pipeline` | `src/pipeline/` | **Algoritmo** de segmentação por cor (campo, obstáculos, pontos de linha) | **Não.** Só numpy, OpenCV e pandas |
-| `Webots_YOLOv8` | `src/Webots_YOLOv8/` | **Integração**: YOLO, validação, parâmetros, mensagens e o nó ROS 2 | Só `yolo_simulation.py` e `vision_messages.py` |
+| `pipeline` | `src/pipeline/` | **Algoritmo** de segmentação por cor (campo, obstáculos, pontos de linha) e a ferramenta de calibração `calibrate.py` | **Não.** Só numpy, OpenCV e pandas |
+| `Webots_YOLOv8` | `src/Webots_YOLOv8/` | **Integração**: YOLO, validação, parâmetros, mensagens e o nó ROS 2 | Só `yolo_simulation.py`, `vision_messages.py` e `usb_camera.py` |
 
 A dependência vai **sempre** de `Webots_YOLOv8` para `pipeline`, nunca o contrário. Isso é o que permite
 experimentar a segmentação sozinha (`python -m pipeline foto.png`), sem ROS e sem detector. Um teste
@@ -27,11 +27,13 @@ Módulos de `Webots_YOLOv8`:
 | `vision_messages.py` | Detecções e segmentação → mensagens `soccer_vision_2d_msgs` | sim |
 | `running_inference.py` | Carrega o modelo e roda a inferência | só ao resolver o caminho dos pesos |
 | `yolo_simulation.py` | Nó: só **orquestra** captura → YOLO → segmentação → validação → publicação | sim |
+| `usb_camera.py` | Nó da câmera USB do **robô real**: lê `/dev/video<id>` e publica `Image` e `CameraInfo` (veja [Robô real](#robô-real-câmera-usb)) | sim |
 | `tools/` | `compare_models.py` (benchmark e acurácia) e `train_yolo26n.py` (receita de treino) | não |
 
 ## O que acontece em cada frame
 
-1. A câmera publica `/AUREA/camera_optical_frame/image_color`; o callback converte para BGR (`cv_bridge`).
+1. A câmera publica `/AUREA/camera_optical_frame/image_color` (no robô real, o `usb_camera` publica em
+   `/camera/image_raw` e o launch faz o remap para esse tópico fixo); o callback converte para BGR (`cv_bridge`).
 2. **YOLO.** `running_inference.detect_model` roda o modelo a 320 px (confiança 0,45, até 10 detecções) e
    devolve classes, scores e caixas `[centro_x, centro_y, largura, altura]` em pixels da imagem original;
    `detections_from_yolo` as converte em objetos `Detection`.
@@ -101,13 +103,40 @@ cada frame, e consulta uma janela de `±margem` pixels. Os pontos fora da imagem
 O `soccer_ipm` descarta objetos cujo ponto de apoio cai nos 20% inferiores da imagem
 (`footpoint_out_of_image_threshold` = 0,8, padrão dele), pois estão parcialmente fora do quadro.
 
+## Robô real (câmera USB)
+
+O `src/Webots_YOLOv8/launch/vision_robot.launch.py` (chamado por `robot.sh run`) sobe, com relógio real (`use_sim_time: False`):
+
+| Nó | Executável | Papel | Condição |
+|---|---|---|---|
+| `usb_camera` | `Webots_YOLOv8 usb_camera` | Lê `/dev/video<id>` (OpenCV, V4L2, MJPG) e publica `Image` (bgr8) em `camera_topic` e `CameraInfo` em `camera_info_topic` | `start_camera` (padrão `true`) |
+| `vision_node` | `Webots_YOLOv8 finder` | O **mesmo** nó do simulador; o launch faz o remap do tópico fixo do AUREA para `camera_topic` | sempre |
+| `soccer_ipm_node` | `soccer_ipm ipm` | Pixels → metros; `camera_info` remapeado para `camera_info_topic` | `use_ipm` (padrão `true`) |
+| `camera_tf_body`, `camera_tf_optical` | `tf2_ros static_transform_publisher` | `output_frame` → `camera_link` → `camera_frame` (convenção óptica: z à frente) | `publish_tf` (padrão `false`) |
+
+Fluxo: `usb_camera` → `/camera/image_raw` → `vision_node` → `*_in_image` → `soccer_ipm` → `*_relative`. O `soccer_ipm`
+usa o `frame_id` do `CameraInfo` (`camera_frame`) e precisa de um TF até `output_frame`; o repositório só o publica
+se `publish_tf:=true`.
+
+Diferenças em relação ao `vision.launch.py`: sem `use_sim_time`, câmera própria no lugar do Webots, tópicos e
+frames por argumento e `show_window` desligado por padrão. Argumentos, passo a passo e pendências (TF, calibração
+intrínseca e de cor, internet, hardware) estão no [README](../README.md#executando-no-robô-real); procedimento
+de manutenção em [development.md](development.md#robô-real).
+
+Calibração: `python -m pipeline.calibrate` (via `./robot.sh calibrate`) grava em `calibracao/` as faixas HSV
+(`hsv_params.yaml`, usado como `params_file`) e `fx, fy, cx, cy` (`camera_args.txt`, repassados como argumentos do
+launch); o `robot.sh run` os usa sozinho. Veja [development.md](development.md#robô-real).
+
+**Limites desta parte:** o `CameraInfo` é **estimado** (pinhole a partir de `hfov_deg`, sem distorção); os
+arquivos do robô real só tiveram a **sintaxe conferida**; há uma câmera por launch.
+
 ## Parâmetros
 
 | Parâmetro | Padrão | Efeito |
 |---|---|---|
 | `model_file` | `best.pt` | Pesos: nome instalado em `share/Webots_YOLOv8/modelo/` ou **caminho absoluto**. **Só na partida** |
 | `strict_class_check` | `true` | Recusa na partida um modelo cujas classes não sejam as do nó. **Só na partida** |
-| `show_window` | `true` | Janela do OpenCV (argumento do launch; `false` para rodar sem display) |
+| `show_window` | `true` | Janela do OpenCV (argumento do launch: padrão `true` em `vision.launch.py` e `false` em `vision_robot.launch.py`; `false` para rodar sem display) |
 | `publish_segmentation` | `true` | Publica fronteira e obstáculos |
 | `validation.enabled` | `true` | Liga/desliga a validação |
 | `validation.footpoint_margin_px` | `12` | Tolerância do ponto de apoio |
@@ -151,9 +180,19 @@ listando as divergências. `strict_class_check:=false` rebaixa isso a um aviso. 
 
 - **O tópico da câmera é fixo** (`CAMERA_TOPIC` em `yolo_simulation.py`: `/AUREA/camera_optical_frame/image_color`).
   Para outra câmera, use um remap: `ros2 run Webots_YOLOv8 finder --ros-args -r /AUREA/camera_optical_frame/image_color:=/minha/camera`.
-  No `src/Webots_YOLOv8/launch/vision.launch.py`, os remaps do `soccer_ipm` também apontam para os tópicos do AUREA.
+  No `src/Webots_YOLOv8/launch/vision.launch.py`, os remaps do `soccer_ipm` também apontam para os tópicos do AUREA. No robô real,
+  use `src/Webots_YOLOv8/launch/vision_robot.launch.py`, que faz o remap por `camera_topic` e `camera_info_topic`.
 - **Formato de saída único**: as mensagens são `soccer_vision_2d_msgs`. Se o seu behavior consome outro formato,
   é preciso um adaptador (não incluído).
-- **Um robô, uma câmera**: não há suporte a várias câmeras nem a distorção de lente (`use_distortion` está `false`).
-- **Faixas HSV de exemplo**: `DEFAULT_COLOR_SPACES` (usadas por `python -m pipeline` sem `--hsv-csv`) são só um
-  ponto de partida e precisam ser calibradas.
+- **Um robô, uma câmera**: um `usb_camera` e um nó de visão por launch. Duas câmeras ao mesmo tempo exigiriam uma
+  segunda instância em outro namespace (**não implementado**). Não há suporte a distorção de lente
+  (`use_distortion` está `false`).
+- **Faixas HSV**: `DEFAULT_COLOR_SPACES` (usadas por `python -m pipeline` sem `--hsv-csv`) são só um ponto de
+  partida. O verde padrão do nó (`src/Webots_YOLOv8/data/green_pixels.csv`) vem do **campo simulado do Webots** e não serve para
+  um campo real: calibre.
+- **Robô real, calibração e TF**: o `CameraInfo` do `usb_camera` é estimado, e o TF `base_link` → câmera só é
+  publicado com `publish_tf:=true` (ou pelo próprio robô). Sem isso as distâncias em metros ficam erradas ou
+  ausentes.
+- **Patch do `soccer_ipm` necessário** para evitar a queda na partida (veja [development.md](development.md#dependências-ros-2-e-o-patch-do-soccer_ipm)).
+- **Ambiente-alvo (Ubuntu 22.04 + Humble + Webots) não testado de ponta a ponta**; `robot.sh`,
+  `vision_robot.launch.py` e `usb_camera.py` só tiveram a sintaxe conferida.

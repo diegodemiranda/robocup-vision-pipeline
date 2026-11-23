@@ -147,7 +147,9 @@ O modelo foi treinado a 640 px, mas o nó roda a 320 px. Uma execução a 640 px
 5. **Variação entre execuções de cerca de 1 ms** (por isso são 3 execuções); diferenças menores que isso não são
    conclusivas.
 6. **Sem Webots e sem robô**: nada foi medido dentro do simulador nem no hardware do robô; a latência de transporte
-   do ROS 2 não está incluída.
+   do ROS 2 não está incluída. Também **não** entram no custo medido a captura USB (V4L2/MJPG) do `usb_camera` e a
+   conversão `cv_bridge` do robô real; `robot.sh`, `vision_robot.launch.py` e `usb_camera.py` só tiveram a sintaxe
+   conferida.
 7. **Sem acurácia** (próxima seção).
 
 ## Acurácia: o que falta medir

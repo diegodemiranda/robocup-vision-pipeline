@@ -12,6 +12,8 @@ Ambientes, dependências, testes, ferramentas e procedimentos de manutenção.
 | adicionar um parâmetro | `vision_parameters.py` (declaração + leitura) e `src/Webots_YOLOv8/config/vision_params.yaml` |
 | mudar o que o nó publica | `yolo_simulation.py` e `vision_messages.py` |
 | avaliar/treinar modelos | `src/Webots_YOLOv8/tools/` |
+| mudar o launcher do robô real | `robot.sh`, `src/Webots_YOLOv8/launch/vision_robot.launch.py` e `src/Webots_YOLOv8/usb_camera.py` |
+| mudar a calibração com a câmera | `src/pipeline/calibrate.py` (cálculo das faixas e comandos) e `test/test_calibrate.py` |
 
 Veja [architecture.md](architecture.md) para o fluxo e as decisões.
 
@@ -25,6 +27,7 @@ O que foi **realmente executado** para validar o código, e o que **não** foi:
 | **B.** PyTorch 2.14.1 (CPU) + Ultralytics 8.4.184 + ONNX Runtime 1.31.0 | 3.12 | testes de contrato com YOLOv8n e YOLO26n reais; benchmarks; ferramentas de treino e comparação |
 | **C.** ROS 2 Humble via RoboStack (conda-forge), com `soccer_ipm`, `ipm_library` e `soccer_interfaces` compilados | 3.14 | `colcon build` (normal e `--symlink-install`); suíte completa com `rclpy` real e `soccer_ipm` real |
 | **Alvo.** Ubuntu 22.04 + ROS 2 Humble (apt) + Webots | 3.10 | **não testado de ponta a ponta**; nem o nó com pesos reais dentro do Webots |
+| **Robô real** (câmera USB) | 3.10 | `robot.sh`, `vision_robot.launch.py` e `usb_camera.py`: **só a sintaxe** (e o `flake8`). O `calibrate` foi testado sem tela e com janela simulada (Python 3.12, sem ROS), **não** com a câmera USB real nem com tela real |
 
 > O ambiente C usa Python 3.14, mais novo que o Python 3.10 do Humble oficial; o ambiente A cobre o Python
 > 3.10 só para a parte sem ROS. Rodar a suíte inteira no alvo é o próximo passo de validação.
@@ -86,7 +89,57 @@ com dois diretórios-raiz de pacotes, o `setup.py develop` legado deixava `Webot
 `sys.path`. Os pacotes `pipeline` e `Webots_YOLOv8` são instalados lado a lado.
 
 Pesos em `src/Webots_YOLOv8/models/` **antes** do build são instalados em `share/Webots_YOLOv8/modelo/`. Com
-`--symlink-install`, arquivos adicionados depois não aparecem; use um caminho absoluto em `model_file`.
+`--symlink-install`, arquivos adicionados depois não aparecem; use um caminho absoluto em `model_file`. O
+`robot.sh` compila com `--symlink-install` e passa `model_file` como caminho absoluto (`MODEL` ou `src/Webots_YOLOv8/models/best.pt`),
+então os pesos não precisam existir antes do build.
+
+## Robô real
+
+Arquivos: `robot.sh` (launcher), `src/Webots_YOLOv8/launch/vision_robot.launch.py` e `src/Webots_YOLOv8/usb_camera.py`. O uso, o passo a
+passo e as pendências estão no [README](../README.md#executando-no-robô-real); a arquitetura, em
+[architecture.md](architecture.md#robô-real-câmera-usb). Aqui, o que importa para mantê-los.
+
+**`robot.sh`.**
+
+- `setup` (uma vez, com internet): confere `git`, `colcon`, `rosdep` e `pip3`; faz `rosdep init`/`update` se preciso;
+  clona `soccer_interfaces`, `ipm` e `soccer_ipm` (branch = `ROS_DISTRO`, padrão `humble`) em `~/robot_ws/src`, ao
+  lado de um link para este repositório; aplica `docs/patches/soccer_ipm_camera_info.patch` (só se ainda não
+  aplicado); roda `rosdep install`; instala `ultralytics` com `numpy<2`.
+- `build`: `colcon build --symlink-install`; na primeira vez compila tudo, depois só `Webots_YOLOv8`.
+- `run`: compila (a menos que `NOBUILD=1`), confere os pesos e executa `ros2 launch Webots_YOLOv8
+  vision_robot.launch.py`. Os argumentos extras vão direto ao launch. Se existirem, lê `calibracao/camera_args.txt` e
+  `calibracao/hsv_params.yaml` (`NOCALIB=1` ignora; `CALIB_DIR` muda a pasta) e AVISA quando faltam.
+- `calibrate MODO ...`: `python3 -m pipeline.calibrate` com `PYTHONPATH=src` (sem ROS e sem build).
+- O caminho do patch está fixo em `docs/patches/`: se os docs mudarem de lugar, ajuste o script.
+
+**`vision_robot.launch.py`.** Compõe `usb_camera`, `vision_node` (`finder`), `soccer_ipm` e, opcionalmente, o TF
+estático (`publish_tf`). `params_file` vem **depois** de `src/Webots_YOLOv8/config/vision_params.yaml`, então o que foi calibrado
+prevalece; `fx, fy, cx, cy` zerados significam "estimar por `hfov_deg`". Para adicionar um argumento: declare-o em
+`args`, passe-o ao nó e documente no README.
+
+**`usb_camera.py`.** OpenCV + V4L2 (`CAP_V4L2`), MJPG, `BUFFERSIZE=1`. O `CameraInfo` é pinhole e **sem distorção**; o
+`frame_id` é `camera_frame`. A câmera USB só abre em um programa por vez: pare o pipeline antes de calibrar.
+
+**`python -m pipeline.calibrate`** (`src/pipeline/calibrate.py`; só OpenCV, numpy e pandas, então respeita o teste de
+independência de `pipeline`):
+
+- `hsv`: junta pixels HSV das regiões amostradas (até 4.000 por região e quadro) e calcula, por classe, os percentis
+  2 a 98 mais a folga (6/30/40). O matiz é calculado também com o círculo girado em 90° e vale o intervalo menor, o
+  que gera `h_min > h_max` para o vermelho; o branco usa matiz livre (0 a 179). Classes sem amostra mantêm a base
+  (`--base` ou `DEFAULT_COLOR_SPACES`). Saídas: `hsv.csv`, `hsv_params.yaml` (só as classes calibradas, inteiros) e
+  `hsv_preview.png`.
+- `intrinsics`: `findChessboardCorners` + `cornerSubPix` + `calibrateCamera`; captura sozinha quando a pose muda
+  (`--interval`, `--min-move`) ou lê `--images`. Saídas: `intrinsics.yaml` e `camera_args.txt` (inclui `width` e
+  `height`, porque os intrínsecos valem para uma resolução).
+- `snapshot`: foto e foto com grade, para escolher `--sample` sem tela.
+- O modo interativo (`hsv` sem `--sample`) exige tela; sem `DISPLAY` ele recusa com uma mensagem. As funções de
+  cálculo são puras e testadas; o laço da janela é fino de propósito.
+
+**Testes.** `test/test_calibrate.py` cobre o cálculo (matiz circular, folga, branco), as saídas (o CSV volta pelo
+`load_color_spaces_from_csv`, o YAML passa na validação do nó), os comandos sem tela com câmera simulada (aquecimento
+descartado), a calibração de uma câmera sintética de `fx = fy = 800` conhecidos e o modo interativo com janela e mouse
+simulados. **Não há teste** de `robot.sh`, do launch nem do `usb_camera.py` (só sintaxe e `flake8`); o `robot.sh` foi
+conferido à mão com um `ros2` falso.
 
 ## Testes
 
@@ -114,6 +167,7 @@ Os módulos que dependem de pacotes ausentes são **pulados**, não falham:
 | `test_end_to_end_ipm.py` | 4 | com o `soccer_ipm` real: distâncias; regressão do `camera_info` | ROS 2, `soccer_ipm` |
 | `test_running_inference.py` | 10 | contrato com as arquiteturas reais YOLOv8n e YOLO26n; `load_model` | Ultralytics |
 | `test_training_tools.py` | 2 | receita de treino lida de um checkpoint de referência | PyTorch, Ultralytics |
+| `test_calibrate.py` | 21 | `python -m pipeline.calibrate`: percentis e matiz circular; CSV e YAML aceitos pelo pipeline e pelo nó; comandos sem tela com câmera simulada; calibração de câmera sintética; modo interativo com janela simulada | OpenCV, numpy, pandas |
 
 Os testes de ROS usam um **YOLO falso** (módulo `ultralytics` simulado) com o `running_inference.py`, a
 segmentação, a validação e as mensagens reais, e pesos de mentira em `tmp_path`: **não dependem de pesos
@@ -126,8 +180,9 @@ colcon build --packages-select Webots_YOLOv8 && source install/setup.bash
 python -m pytest test -q
 ```
 
-Contagem verificada: 58 testes únicos (46 passam no ambiente C, que pula os 12 que exigem Ultralytics; esses
-12 passam no ambiente B). Os defeitos que os testes cobrem foram conferidos por **mutação** (introduzir o erro
+Contagem: 79 testes únicos. Os 58 anteriores foram verificados como descrito (46 passam no ambiente C, que pula
+os 12 que exigem Ultralytics; esses 12 passam no ambiente B). Os 21 de `test_calibrate.py` exigem só OpenCV, numpy e
+pandas e passaram em Python 3.12 sem ROS; **a suíte completa com ROS não foi rodada de novo** depois de adicioná-los. Os defeitos que os testes cobrem foram conferidos por **mutação** (introduzir o erro
 de propósito e ver o teste falhar), por exemplo: validador que aceita tudo, `int` em campo `double`,
 fronteira vazia publicada, parâmetro inválido aceito, `pipeline` importando `rclpy`.
 
@@ -137,6 +192,8 @@ fronteira vazia publicada, parâmetro inválido aceito, `pipeline` importando `r
 pip install flake8
 flake8 src test setup.py launch      # o limite (120 colunas) está em setup.cfg
 ```
+
+O `flake8` passa em `launch/`, `usb_camera.py`, `calibrate.py` e `test_calibrate.py`.
 
 ## Ferramentas de avaliação
 
@@ -189,7 +246,7 @@ import entre eles. Diferenças em relação a esse commit:
 | `field_boundary_detector.py`, `obstacle_detector.py`, `line_detector.py` | idênticos, exceto o import relativo (`from .color_common import …`) |
 | `color_common.py` | **estendido**: matiz circular, `mask_hsv`, `as_min_max`/`from_min_max`, `color_spaces_from_calibration` |
 | `main_pipeline.py` | **reescrito**: classe `VisionPipeline`, `PipelineConfig`/`PipelineResult`, reescala para a resolução original, fusão com o YOLO, `draw_pipeline_overlay` (o original tem `draw_debug_image`) |
-| `__init__.py`, `__main__.py` | novos aqui |
+| `__init__.py`, `__main__.py`, `calibrate.py` | novos aqui |
 
 Correções feitas em um repositório **não chegam sozinhas** ao outro; a sincronia é manual. Ao corrigir um dos três
 filtros idênticos, aplique o mesmo diff no outro repositório.
@@ -203,8 +260,15 @@ Ao lançar uma versão, atualize juntos: `setup.py` (`version`), `package.xml` (
 ## Problemas conhecidos
 
 - **`numpy` 2 e o `cv_bridge` do apt (não verificado aqui).** O `cv_bridge` do Humble foi compilado com NumPy
-  1.x; um `pip install ultralytics` que traga NumPy 2 pode quebrá-lo. Se aparecer erro de `_ARRAY_API`, fixe
-  `pip install "numpy<2"`.
+  1.x; um `pip install ultralytics` que traga NumPy 2 pode quebrá-lo. O `./robot.sh setup` já instala `numpy<2`; se
+  aparecer erro de `_ARRAY_API`, fixe `pip install "numpy<2"`.
 - **Sem display.** Com `show_window:=true` e sem servidor gráfico, o OpenCV falha ao abrir a janela; use
-  `show_window:=false`.
-- **`rosdep install`** não foi executado por mim; confira se resolve todas as chaves no seu ambiente.
+  `show_window:=false`. Em um robô sem monitor, veja a imagem por `rqt_image_view` em outro computador, e calibre sem
+  tela (`snapshot` e `hsv --sample`).
+- **`rosdep install`** não foi executado por mim (o `./robot.sh setup` o roda); confira se resolve todas as chaves no seu ambiente.
+- **Robô real não testado**: `robot.sh`, `vision_robot.launch.py` e `usb_camera.py` só tiveram a sintaxe conferida. O
+  `CameraInfo` do `usb_camera` é estimado até rodar `calibrate intrinsics`, e o verde padrão vem do simulador até rodar
+  `calibrate hsv`.
+- **Distorção da lente**: o `calibrate intrinsics` a mede, mas o pipeline não a corrige (`use_distortion` é `false`).
+- **Calibração com câmera e tela reais**: o `calibrate` foi testado com imagens sintéticas, câmera simulada e janela
+  simulada; o modo interativo em tela real e a captura da câmera USB real não foram.
